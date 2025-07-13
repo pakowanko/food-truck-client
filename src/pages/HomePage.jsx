@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API_URL from '../apiConfig.js';
-// Załóżmy, że TruckCard jest w folderze components
-// import TruckCard from '../components/TruckCard.jsx'; 
+import API_URL from './apiConfig.js';
 
 function HomePage() {
   const [trucks, setTrucks] = useState([]);
@@ -22,19 +20,18 @@ function HomePage() {
     fetchTrucks();
   }, []);
 
-  if (loading) return <p>Ładowanie...</p>;
+  if (loading) return <p>Ładowanie food trucków...</p>;
 
   return (
     <div>
       <h1>Dostępne Food Trucki</h1>
       <div>
-        {trucks.map(truck => (
-          // <TruckCard key={truck.truck_id} truck={truck} />
-          <div key={truck.truck_id}>
+        {trucks.length > 0 ? trucks.map(truck => (
+          <div key={truck.profile_id}>
              <h3>{truck.truck_name}</h3>
-             <p>{truck.cuisine_types}</p>
+             <p>{truck.cuisine_type?.join(', ')}</p>
           </div>
-        ))}
+        )) : <p>Brak dostępnych food trucków.</p>}
       </div>
     </div>
   );
