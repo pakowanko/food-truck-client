@@ -5,7 +5,7 @@ import API_URL from '../apiConfig.js';
 function RegisterPage() {
   const navigate = useNavigate();
   
-  // Stany podstawowe
+  // --- Stany dla wszystkich pól ---
   const [userType, setUserType] = useState('organizer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,26 +14,24 @@ function RegisterPage() {
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   
-  // Stany dla firmy
   const [companyName, setCompanyName] = useState('');
   const [nip, setNip] = useState('');
 
-  // Nowe, bardziej szczegółowe stany dla food trucka
   const [basePostalCode, setBasePostalCode] = useState('');
   const [cuisineTypes, setCuisineTypes] = useState([]);
-  const [beverages, setBeverages] = useState([]);
   const [dietaryOptions, setDietaryOptions] = useState([]);
-  
+  const [beverages, setBeverages] = useState([]);
+
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // NOWE, BARDZIEJ SZCZEGÓŁOWE KATEGORIE
-  const CUISINE_OPTIONS = ['Burgery', 'Pizza', 'Zapiekanki', 'Hot-dogi', 'Frytki belgijskie', 'Nachos', 'Kuchnia polska', 'Kuchnia azjatycka', 'Kuchnia meksykańska'];
-  const DESSERT_OPTIONS = ['Lody', 'Gofry', 'Churros', 'Słodkie wypieki'];
+  // --- Opcje do wyboru w formularzu ---
+  const CUISINE_OPTIONS = ['Burgery', 'Pizza', 'Zapiekanki', 'Hot-dogi', 'Frytki belgijskie', 'Nachos', 'Kuchnia polska', 'Kuchnia azjatycka', 'Kuchnia meksykańska', 'Lody', 'Gofry', 'Churros', 'Słodkie wypieki'];
   const BEVERAGE_OPTIONS = ['Kawa', 'Lemoniada', 'Napoje bezalkoholowe', 'Piwo kraftowe'];
   const DIETARY_OPTIONS_LIST = ['Opcje wegetariańskie', 'Opcje wegańskie', 'Opcje bezglutenowe'];
 
+  // --- Handlery ---
   const handleCheckboxChange = (e, state, setState) => {
     const { value, checked } = e.target;
     if (checked) {
@@ -50,24 +48,20 @@ function RegisterPage() {
       return;
     }
     if (!termsAccepted) {
-      setMessage('Musisz zaakceptować regulamin.');
-      return;
+        setMessage('Musisz zaakceptować regulamin.');
+        return;
     }
     setLoading(true);
     setMessage('');
-
-    // Łączymy wybrane dania i desery w jedną listę 'cuisine_type'
-    const combinedCuisine = [...cuisineTypes, ...beverages];
 
     const registrationData = {
         email, password, user_type: userType,
         first_name: firstName, last_name: lastName, phone_number: phoneNumber,
         company_name: userType === 'owner' ? companyName : null,
         nip: userType === 'owner' ? nip : null,
-        country_code: 'PL', // Na razie na stałe
-        // Nowe dane
         base_postal_code: userType === 'owner' ? basePostalCode : null,
-        cuisine_type: userType === 'owner' ? combinedCuisine : [],
+        cuisine_type: userType === 'owner' ? cuisineTypes : [],
+        beverages: userType === 'owner' ? beverages : [],
         dietary_options: userType === 'owner' ? dietaryOptions : [],
     };
 
@@ -103,14 +97,26 @@ function RegisterPage() {
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        {/* ... Pola Dane Logowania i Dane Kontaktowe bez zmian ... */}
+        <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
+            <legend>Dane Logowania</legend>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adres e-mail" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Hasło" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
+            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Potwierdź hasło" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
+        </fieldset>
+        
+        <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
+            <legend>Dane Kontaktowe</legend>
+            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Imię" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
+            <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nazwisko" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
+            <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numer telefonu" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
+        </fieldset>
 
         {userType === 'owner' && (
              <>
                 <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                    <legend>Dane Firmy (Właściciela)</legend>
-                    <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Nazwa firmy / działalności" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
-                    <input value={nip} onChange={(e) => setNip(e.target.value)} placeholder="NIP" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
+                    <legend>Dane Firmy / Food Trucka</legend>
+                    <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Nazwa firmy / food trucka" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
+                    <input value={nip} onChange={(e) => setNip(e.target.value)} placeholder="NIP" style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
                     <input value={basePostalCode} onChange={(e) => setBasePostalCode(e.target.value)} placeholder="Kod pocztowy, gdzie głównie stacjonujesz (np. 00-001)" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
                 </fieldset>
 
@@ -119,7 +125,7 @@ function RegisterPage() {
                     
                     <p>Dania i przekąski:</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '5px' }}>
-                      {[...CUISINE_OPTIONS, ...DESSERT_OPTIONS].sort().map(item => (
+                      {CUISINE_OPTIONS.map(item => (
                         <label key={item}><input type="checkbox" value={item} onChange={(e) => handleCheckboxChange(e, cuisineTypes, setCuisineTypes)} /> {item}</label>
                       ))}
                     </div>
