@@ -1,33 +1,29 @@
 {
-  "name": "food-truck-backend",
-  "version": "1.0.0",
-  "description": "food-truck-backend",
-  "main": "index.js",
+  "name": "food-truck-client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/pakowanko/food-truck-backend.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/pakowanko/food-truck-backend/issues"
-  },
-  "homepage": "https://github.com/pakowanko/food-truck-backend#readme",
   "dependencies": {
-    "@sendgrid/mail": "^8.1.5",
-    "bcryptjs": "^3.0.2",
-    "cors": "^2.8.5",
-    "dotenv": "^17.1.0",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "multer": "^2.0.1",
-    "pg": "^8.16.3",
-    "pg-native": "^3.5.2",
-    "socket.io": "^4.8.1",
-    "stripe": "^18.3.0"
+    "axios": "^1.7.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.25.1",
+    "socket.io-client": "^4.7.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.4",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.8",
+    "vite": "^5.3.4"
   }
 }
