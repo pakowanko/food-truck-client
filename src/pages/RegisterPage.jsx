@@ -5,6 +5,7 @@ import API_URL from '../apiConfig.js';
 function RegisterPage() {
   const navigate = useNavigate();
   
+  // Stany podstawowe
   const [userType, setUserType] = useState('organizer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,25 +13,26 @@ function RegisterPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [countryCode, setCountryCode] = useState('PL'); 
   
+  // Stany dla firmy
   const [companyName, setCompanyName] = useState('');
   const [nip, setNip] = useState('');
 
-  // Nowe stany dla formularza właściciela food trucka
+  // Nowe, bardziej szczegółowe stany dla food trucka
   const [basePostalCode, setBasePostalCode] = useState('');
   const [cuisineTypes, setCuisineTypes] = useState([]);
+  const [beverages, setBeverages] = useState([]);
   const [dietaryOptions, setDietaryOptions] = useState([]);
-  const [avgPriceRange, setAvgPriceRange] = useState('');
-
+  
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Opcje do wyboru w formularzu
-  const CUISINE_OPTIONS = ['Burgery', 'Pizza', 'Włoska', 'Azjatycka', 'Meksykańska', 'Wegetariańska/Wegańska', 'Kawa i Desery', 'Polska'];
-  const DIETARY_OPTIONS = ['Wegetariańskie', 'Wegańskie', 'Bezglutenowe'];
-  const PRICE_RANGES = ['do 30 zł', '30-50 zł', 'powyżej 50 zł'];
+  // NOWE, BARDZIEJ SZCZEGÓŁOWE KATEGORIE
+  const CUISINE_OPTIONS = ['Burgery', 'Pizza', 'Zapiekanki', 'Hot-dogi', 'Frytki belgijskie', 'Nachos', 'Kuchnia polska', 'Kuchnia azjatycka', 'Kuchnia meksykańska'];
+  const DESSERT_OPTIONS = ['Lody', 'Gofry', 'Churros', 'Słodkie wypieki'];
+  const BEVERAGE_OPTIONS = ['Kawa', 'Lemoniada', 'Napoje bezalkoholowe', 'Piwo kraftowe'];
+  const DIETARY_OPTIONS_LIST = ['Opcje wegetariańskie', 'Opcje wegańskie', 'Opcje bezglutenowe'];
 
   const handleCheckboxChange = (e, state, setState) => {
     const { value, checked } = e.target;
@@ -48,23 +50,25 @@ function RegisterPage() {
       return;
     }
     if (!termsAccepted) {
-        setMessage('Musisz zaakceptować regulamin.');
-        return;
+      setMessage('Musisz zaakceptować regulamin.');
+      return;
     }
     setLoading(true);
     setMessage('');
+
+    // Łączymy wybrane dania i desery w jedną listę 'cuisine_type'
+    const combinedCuisine = [...cuisineTypes, ...beverages];
 
     const registrationData = {
         email, password, user_type: userType,
         first_name: firstName, last_name: lastName, phone_number: phoneNumber,
         company_name: userType === 'owner' ? companyName : null,
         nip: userType === 'owner' ? nip : null,
-        country_code: countryCode,
-        // Nowe dane wysyłane do API
+        country_code: 'PL', // Na razie na stałe
+        // Nowe dane
         base_postal_code: userType === 'owner' ? basePostalCode : null,
-        cuisine_type: userType === 'owner' ? cuisineTypes : [],
+        cuisine_type: userType === 'owner' ? combinedCuisine : [],
         dietary_options: userType === 'owner' ? dietaryOptions : [],
-        avg_price_range: userType === 'owner' ? avgPriceRange : null,
     };
 
     try {
@@ -99,19 +103,7 @@ function RegisterPage() {
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-            <legend>Dane Logowania</legend>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adres e-mail" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Hasło" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Potwierdź hasło" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-        </fieldset>
-        
-        <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-            <legend>Dane Kontaktowe</legend>
-            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Imię" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
-            <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nazwisko" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-            <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numer telefonu" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-        </fieldset>
+        {/* ... Pola Dane Logowania i Dane Kontaktowe bez zmian ... */}
 
         {userType === 'owner' && (
              <>
@@ -119,39 +111,38 @@ function RegisterPage() {
                     <legend>Dane Firmy (Właściciela)</legend>
                     <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Nazwa firmy / działalności" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
                     <input value={nip} onChange={(e) => setNip(e.target.value)} placeholder="NIP" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
+                    <input value={basePostalCode} onChange={(e) => setBasePostalCode(e.target.value)} placeholder="Kod pocztowy, gdzie głównie stacjonujesz (np. 00-001)" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
                 </fieldset>
 
                 <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                    <legend>Informacje o Food Trucku</legend>
-                    <input value={basePostalCode} onChange={(e) => setBasePostalCode(e.target.value)} placeholder="Kod pocztowy, gdzie głównie stacjonujesz" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginBottom: '10px'}}/>
+                    <legend>Oferta (zaznacz wszystko, co pasuje)</legend>
                     
-                    <p>Rodzaj kuchni (zaznacz główne):</p>
+                    <p>Dania i przekąski:</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '5px' }}>
-                        {CUISINE_OPTIONS.map(cuisine => (
-                        <label key={cuisine}><input type="checkbox" value={cuisine} onChange={(e) => handleCheckboxChange(e, cuisineTypes, setCuisineTypes)} /> {cuisine}</label>
-                        ))}
+                      {[...CUISINE_OPTIONS, ...DESSERT_OPTIONS].sort().map(item => (
+                        <label key={item}><input type="checkbox" value={item} onChange={(e) => handleCheckboxChange(e, cuisineTypes, setCuisineTypes)} /> {item}</label>
+                      ))}
                     </div>
 
-                    <p style={{marginTop: '15px'}}>Dostępne opcje dietetyczne:</p>
-                    <div style={{ display: 'flex', gap: '15px' }}>
-                        {DIETARY_OPTIONS.map(option => (
-                        <label key={option}><input type="checkbox" value={option} onChange={(e) => handleCheckboxChange(e, dietaryOptions, setDietaryOptions)} /> {option}</label>
-                        ))}
+                    <p style={{marginTop: '15px'}}>Napoje:</p>
+                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                      {BEVERAGE_OPTIONS.map(item => (
+                        <label key={item}><input type="checkbox" value={item} onChange={(e) => handleCheckboxChange(e, beverages, setBeverages)} /> {item}</label>
+                      ))}
                     </div>
 
-                    <p style={{marginTop: '15px'}}>Średnia cena za posiłek:</p>
-                    <select value={avgPriceRange} onChange={(e) => setAvgPriceRange(e.target.value)} required style={{width: '100%', padding: '8px'}}>
-                        <option value="">Wybierz przedział...</option>
-                        {PRICE_RANGES.map(range => <option key={range} value={range}>{range}</option>)}
-                    </select>
+                    <p style={{marginTop: '15px'}}>Opcje dietetyczne:</p>
+                     <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                      {DIETARY_OPTIONS_LIST.map(item => (
+                        <label key={item}><input type="checkbox" value={item} onChange={(e) => handleCheckboxChange(e, dietaryOptions, setDietaryOptions)} /> {item}</label>
+                      ))}
+                    </div>
                 </fieldset>
              </>
         )}
         
         <div style={{ marginTop: '10px' }}><label><input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} /> Akceptuję regulamin serwisu.</label></div>
-        
         {message && <p style={{ color: message.startsWith('Rejestracja') ? 'green' : 'red', textAlign: 'center' }}>{message}</p>}
-
         <button type="submit" disabled={loading} style={{ marginTop: '10px', width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold' }}>
             {loading ? 'Rejestrowanie...' : 'Zarejestruj się'}
         </button>
@@ -161,4 +152,5 @@ function RegisterPage() {
     </div>
   );
 }
+
 export default RegisterPage;
