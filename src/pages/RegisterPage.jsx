@@ -17,9 +17,29 @@ function RegisterPage() {
   const [companyName, setCompanyName] = useState('');
   const [nip, setNip] = useState('');
 
+  // Nowe stany dla formularza właściciela food trucka
+  const [basePostalCode, setBasePostalCode] = useState('');
+  const [cuisineTypes, setCuisineTypes] = useState([]);
+  const [dietaryOptions, setDietaryOptions] = useState([]);
+  const [avgPriceRange, setAvgPriceRange] = useState('');
+
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Opcje do wyboru w formularzu
+  const CUISINE_OPTIONS = ['Burgery', 'Pizza', 'Włoska', 'Azjatycka', 'Meksykańska', 'Wegetariańska/Wegańska', 'Kawa i Desery', 'Polska'];
+  const DIETARY_OPTIONS = ['Wegetariańskie', 'Wegańskie', 'Bezglutenowe'];
+  const PRICE_RANGES = ['do 30 zł', '30-50 zł', 'powyżej 50 zł'];
+
+  const handleCheckboxChange = (e, state, setState) => {
+    const { value, checked } = e.target;
+    if (checked) {
+      setState([...state, value]);
+    } else {
+      setState(state.filter((item) => item !== value));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +59,12 @@ function RegisterPage() {
         first_name: firstName, last_name: lastName, phone_number: phoneNumber,
         company_name: userType === 'owner' ? companyName : null,
         nip: userType === 'owner' ? nip : null,
-        country_code: countryCode
+        country_code: countryCode,
+        // Nowe dane wysyłane do API
+        base_postal_code: userType === 'owner' ? basePostalCode : null,
+        cuisine_type: userType === 'owner' ? cuisineTypes : [],
+        dietary_options: userType === 'owner' ? dietaryOptions : [],
+        avg_price_range: userType === 'owner' ? avgPriceRange : null,
     };
 
     try {
@@ -89,11 +114,38 @@ function RegisterPage() {
         </fieldset>
 
         {userType === 'owner' && (
-             <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                <legend>Dane Firmy (Właściciela)</legend>
-                <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Nazwa firmy / działalności" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
-                <input value={nip} onChange={(e) => setNip(e.target.value)} placeholder="NIP" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-            </fieldset>
+             <>
+                <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
+                    <legend>Dane Firmy (Właściciela)</legend>
+                    <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Nazwa firmy / działalności" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
+                    <input value={nip} onChange={(e) => setNip(e.target.value)} placeholder="NIP" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
+                </fieldset>
+
+                <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
+                    <legend>Informacje o Food Trucku</legend>
+                    <input value={basePostalCode} onChange={(e) => setBasePostalCode(e.target.value)} placeholder="Kod pocztowy, gdzie głównie stacjonujesz" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginBottom: '10px'}}/>
+                    
+                    <p>Rodzaj kuchni (zaznacz główne):</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '5px' }}>
+                        {CUISINE_OPTIONS.map(cuisine => (
+                        <label key={cuisine}><input type="checkbox" value={cuisine} onChange={(e) => handleCheckboxChange(e, cuisineTypes, setCuisineTypes)} /> {cuisine}</label>
+                        ))}
+                    </div>
+
+                    <p style={{marginTop: '15px'}}>Dostępne opcje dietetyczne:</p>
+                    <div style={{ display: 'flex', gap: '15px' }}>
+                        {DIETARY_OPTIONS.map(option => (
+                        <label key={option}><input type="checkbox" value={option} onChange={(e) => handleCheckboxChange(e, dietaryOptions, setDietaryOptions)} /> {option}</label>
+                        ))}
+                    </div>
+
+                    <p style={{marginTop: '15px'}}>Średnia cena za posiłek:</p>
+                    <select value={avgPriceRange} onChange={(e) => setAvgPriceRange(e.target.value)} required style={{width: '100%', padding: '8px'}}>
+                        <option value="">Wybierz przedział...</option>
+                        {PRICE_RANGES.map(range => <option key={range} value={range}>{range}</option>)}
+                    </select>
+                </fieldset>
+             </>
         )}
         
         <div style={{ marginTop: '10px' }}><label><input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} /> Akceptuję regulamin serwisu.</label></div>
