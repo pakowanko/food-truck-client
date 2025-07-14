@@ -1,17 +1,19 @@
+// src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './AuthContext.jsx';
 
-// Import stron i komponentów
-import HomePage from './HomePage.jsx';
-import LoginPage from './LoginPage.jsx';
-import RegisterPage from './RegisterPage.jsx';
-import DashboardPage from './DashboardPage.jsx';
-import ChatPage from './ChatPage.jsx';
-import Navbar from './Navbar.jsx';
-import ProtectedRoute from './ProtectedRoute.jsx';
-import CreateProfilePage from './CreateProfilePage.jsx';
-import ProfileDetailsPage from './ProfileDetailsPage.jsx';
+// ZMIANA: Poprawione ścieżki importu
+import HomePage from './pages/HomePage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import RegisterPage from './pages/RegisterPage.jsx';
+import DashboardPage from './pages/DashboardPage.jsx';
+import ChatPage from './pages/ChatPage.jsx';
+import Navbar from './components/Navbar.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import CreateProfilePage from './pages/CreateProfilePage.jsx';
+import TruckDetailsPage from './pages/TruckDetailsPage.jsx';
+import BookingPage from './pages/BookingPage.jsx'; // Dodajemy import dla strony rezerwacji
 
 function App() {
   return (
@@ -24,16 +26,19 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/profile/:profileId" element={<ProfileDetailsPage />} />
-            <Route path="/booking/:profileId" element={<BookingPage />} />
+            {/* ZMIANA: Używamy nowego komponentu TruckDetailsPage */}
+            <Route path="/profile/:profileId" element={<TruckDetailsPage />} />
 
             {/* Trasy chronione */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/chat/:conversationId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
             <Route path="/create-profile" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
             
-            {/* NOWA TRASA DO EDYCJI PROFILU */}
+            {/* ZMIANA: Poprawka trasy do edycji profilu */}
             <Route path="/edit-profile/:profileId" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
+
+            {/* ZMIANA: Dodajemy nową trasę dla strony rezerwacji */}
+            <Route path="/booking/:profileId" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
 
           </Routes>
         </main>
