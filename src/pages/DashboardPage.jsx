@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // ZMIANA: Poprawione ścieżki do plików w folderze nadrzędnym
 import { AuthContext } from '../AuthContext.jsx';
-import api from '../apiConfig.js';
+import { api } from '../apiConfig.js'; 
 
 // Komponent gwiazdek do oceny (bez zmian)
 const StarRating = ({ rating, setRating }) => {

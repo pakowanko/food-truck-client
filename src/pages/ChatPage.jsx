@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import io from 'socket.io-client';
-// ZMIANA: Poprawiona ścieżka do apiConfig.js
-import { API_URL, SOCKET_URL } from '../apiConfig.js'; 
+// ZMIANA: Importujemy teraz instancję 'api' oraz SOCKET_URL
+import { api, SOCKET_URL } from '../apiConfig.js'; 
 
 const socket = io(SOCKET_URL, { 
     autoConnect: false,
@@ -39,25 +39,19 @@ function ChatPage() {
     socket.on('connect', () => {
         console.log(`Połączono z serwerem socket.io, id: ${socket.id}`);
         socket.emit('join_room', conversationId);
-        console.log(`Wysłano żądanie dołączenia do pokoju: ${conversationId}`);
     });
 
+    // ZMIANA: Używamy teraz 'api' (axios) zamiast 'fetch' dla spójności
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${API_URL || SOCKET_URL}/api/conversations/${conversationId}/messages`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || `Błąd serwera: ${response.statusText}`);
-        }
-        const data = await response.json();
-        setMessages(data);
+        // Axios automatycznie dołączy token, jeśli jest ustawiony w AuthContext
+        const response = await api.get(`/conversations/${conversationId}/messages`);
+        setMessages(response.data);
         setError(null);
       } catch (err) {
         console.error("Błąd pobierania historii wiadomości", err);
-        setError("Nie udało się załadować wiadomości. " + err.message);
+        setError(err.response?.data?.message || "Nie udało się załadować wiadomości.");
       } finally {
         setLoading(false);
       }
@@ -104,6 +98,7 @@ function ChatPage() {
   if (loading) return <p>Ładowanie czatu...</p>;
   if (error) return <p style={{color: 'red'}}>Błąd: {error}</p>;
 
+  // Reszta komponentu JSX pozostaje bez zmian
   return (
     <div style={{ maxWidth: '800px', margin: '20px auto', padding: '20px', fontFamily: 'sans-serif', border: '1px solid #eee', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
       <nav style={{ marginBottom: '20px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>

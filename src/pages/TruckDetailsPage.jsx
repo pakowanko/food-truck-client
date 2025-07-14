@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 // ZMIANA: Poprawione ścieżki
 import { AuthContext } from '../AuthContext.jsx';
-import api from '../apiConfig.js';
+import { api } from '../apiConfig.js'; 
 
 // Komponent do wyświetlania gwiazdek (bez zmian)
 const StarRatingDisplay = ({ rating }) => {

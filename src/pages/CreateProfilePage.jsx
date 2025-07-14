@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 // ZMIANA: Poprawione ścieżki importu
 import { AuthContext } from '../AuthContext.jsx';
-import api from '../apiConfig.js';
+import { api } from '../apiConfig.js'; 
 
 const offerOptions = {
   dishes: ["Burgery", "Pizza", "Zapiekanki", "Hot-dogi", "Frytki belgijskie", "Nachos", "Kuchnia polska", "Kuchnia azjatycka", "Kuchnia meksykańska", "Lody", "Gofry", "Churros", "Słodkie wypieki"],

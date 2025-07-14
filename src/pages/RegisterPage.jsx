@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // ZMIANA: Poprawiona ścieżka do apiConfig.js
-import api from '../apiConfig.js'; 
+import { api } from '../apiConfig.js'; 
 
 const offerOptions = {
   dishes: [

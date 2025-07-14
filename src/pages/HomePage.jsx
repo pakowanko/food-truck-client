@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import TruckCard from '../components/TruckCard.jsx'; 
 // ZMIANA: Poprawiona ścieżka do apiConfig.js
-import api from '../apiConfig.js'; 
+import { api } from '../apiConfig.js'; 
 
 const ALL_CUISINES = [
   "Burgery", "Pizza", "Zapiekanki", "Hot-dogi", "Frytki belgijskie", 

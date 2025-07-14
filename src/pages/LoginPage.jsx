@@ -3,7 +3,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 // ZMIANA: Ostateczna poprawka obu ścieżek
 import { AuthContext } from '../AuthContext.jsx'; 
-import api from '../apiConfig.js'; 
+import { api } from '../apiConfig.js'; 
 
 function LoginPage() {
   const [email, setEmail] = useState('');
