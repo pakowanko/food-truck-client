@@ -1,9 +1,9 @@
 // src/pages/LoginPage.jsx
 import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-// ZMIANA: Poprawiona ścieżka do AuthContext i apiConfig
+// ZMIANA: Ostateczna poprawka obu ścieżek
 import { AuthContext } from '../AuthContext.jsx'; 
-import api from '../api/apiConfig.js'; 
+import api from '../apiConfig.js'; 
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -28,18 +28,16 @@ function LoginPage() {
       const loginPayload = { email, password };
       console.log('Krok 2: Przygotowano dane do wysyłki:', loginPayload);
       
-      const url = `${api.defaults.baseURL}/auth/login`; // Używamy baseURL z instancji axios
+      const url = `${api.defaults.baseURL}/auth/login`; 
       console.log('Krok 3: Próba wysłania zapytania na URL:', url);
 
-      // Używamy instancji axios, którą teraz importujemy
       const response = await api.post('/auth/login', loginPayload);
       
       console.log('Krok 4: Otrzymano odpowiedź od serwera.', response);
 
-      const data = response.data; // W axios dane są w polu `data`
+      const data = response.data;
       console.log('Krok 5: Sparsowano dane JSON.', data);
 
-      // W axios odpowiedź 2xx nie rzuca błędu, więc sprawdzamy status
       if (response.status >= 200 && response.status < 300) {
         console.log('Krok 6: Odpowiedź jest OK. Logowanie...');
         login({
@@ -50,7 +48,6 @@ function LoginPage() {
         
         navigate(from, { replace: true });
       } else {
-        // Ta część jest teraz obsługiwana w bloku catch dla axios
         console.error('Krok 6b: Odpowiedź z błędem.', data);
         setLoading(false);
         setMessage(data.message || 'Wystąpił nieznany błąd.');
@@ -58,7 +55,6 @@ function LoginPage() {
     } catch (error) {
       console.error('Krok X: Wystąpił krytyczny błąd w bloku CATCH!', error);
       setLoading(false);
-      // W axios błąd ma strukturę error.response.data.message
       setMessage(error.response?.data?.message || 'Błąd sieci lub serwera.');
     } finally {
       console.log('Krok 7: Wykonano blok finally.');
