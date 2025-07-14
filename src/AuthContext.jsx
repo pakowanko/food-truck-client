@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
-import API_URL from './apiConfig.js'; // Poprawny import
+// ZMIANA: Importujemy naszą skonfigurowaną instancję 'api'
+import { api } from './apiConfig.js';
 
 export const AuthContext = createContext(null);
 
@@ -13,11 +13,11 @@ export const AuthProvider = ({ children }) => {
     const validateToken = async () => {
       if (token) {
         try {
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          // ZMIANA: Ustawiamy nagłówek na naszej instancji 'api', a nie globalnym 'axios'
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-          // --- POPRAWKA JEST TUTAJ ---
-          // Używamy zaimportowanej zmiennej API_URL
-          const response = await axios.get(`${API_URL}/api/auth/profile`);
+          // ZMIANA: Używamy naszej instancji 'api' do wysłania zapytania
+          const response = await api.get('/auth/profile');
 
           setUser(response.data);
         } catch (error) {
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('user');
           setToken(null);
           setUser(null);
-          delete axios.defaults.headers.common['Authorization'];
+          delete api.defaults.headers.common['Authorization'];
         } finally {
           setLoading(false);
         }
@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }) => {
   const login = (userData, userToken) => {
     localStorage.setItem('token', userToken);
     localStorage.setItem('user', JSON.stringify(userData));
+    api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`; // Ustawiamy header przy logowaniu
     setToken(userToken);
     setUser(userData);
   };
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     setToken(null);
     setUser(null);
-    delete axios.defaults.headers.common['Authorization'];
+    delete api.defaults.headers.common['Authorization'];
   };
 
   const value = useMemo(() => ({
