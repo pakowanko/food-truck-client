@@ -1,105 +1,88 @@
+// src/pages/HomePage.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Dodajemy Link
-import API_URL from '../apiConfig.js'; // POPRAWIONA ŚCIEŻKA IMPORTU
+// ZMIANA: Import nowej karty dla food trucka z odpowiedniego folderu
+import TruckCard from '../components/TruckCard.jsx'; 
+import api from '../api/apiConfig'; // Zakładam, że masz taki plik do konfiguracji API
 
-// Prosty komponent karty dla food trucka
-const TruckCard = ({ truck }) => {
-  const imageUrl = truck.profile_image_url || `https://placehold.co/400x250/FF5722/FFFFFF?text=${encodeURIComponent(truck.truck_name)}`;
-  const cuisineText = truck.cuisine_type?.join(', ') || 'Brak danych';
-
-  const styles = {
-    card: {
-        backgroundColor: 'var(--white)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '12px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-        overflow: 'hidden',
-        transition: 'transform 0.2s ease-in-out',
-        width: '300px'
-    },
-    cardImage: {
-        width: '100%',
-        height: '180px',
-        objectFit: 'cover',
-    },
-    cardBody: {
-        padding: '16px',
-    },
-    cardTitle: {
-        margin: '0 0 8px 0',
-    },
-    cardText: {
-        margin: '4px 0',
-        color: 'var(--light-text)',
-        fontSize: '0.9rem',
-    },
-    cardLink: {
-        display: 'inline-block',
-        marginTop: '12px',
-        fontWeight: 'bold',
-    }
-  };
-
-  return (
-    <div style={styles.card}>
-      <img src={imageUrl} alt={truck.truck_name} style={styles.cardImage} />
-      <div style={styles.cardBody}>
-        <h3 style={styles.cardTitle}>{truck.truck_name}</h3>
-        <p style={styles.cardText}>
-          <strong>Kuchnia:</strong> {cuisineText}
-        </p>
-        <Link to={`/truck/${truck.profile_id}`} style={styles.cardLink}>
-          Zobacz szczegóły &rarr;
-        </Link>
-      </div>
-    </div>
-  );
-};
-
+// ZMIANA: Nowa lista rodzajów kuchni do filtra
+const ALL_CUISINES = [
+  "Burgery", "Pizza", "Zapiekanki", "Hot-dogi", "Frytki belgijskie", 
+  "Nachos", "Kuchnia polska", "Kuchnia azjatycka", "Kuchnia meksykańska", 
+  "Lody", "Gofry", "Churros", "Słodkie wypieki", "Kawa", "Lemoniada",
+  "Napoje bezalkoholowe", "Piwo kraftowe", "Opcje wegetariańskie",
+  "Opcje wegańskie", "Opcje bezglutenowe"
+];
 
 function HomePage() {
-  const [trucks, setTrucks] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // ZMIANA: Stany dla nowych filtrów
+  const [postalCode, setPostalCode] = useState('');
+  const [cuisine, setCuisine] = useState(''); // Zmieniono z 'specialization'
+
+  const fetchProfiles = async (filters = {}) => {
+    setLoading(true);
+    setError('');
+    try {
+      const params = new URLSearchParams(filters);
+      // Używamy instancji axios z apiConfig
+      const response = await api.get(`/profiles?${params.toString()}`);
+      setProfiles(response.data);
+    } catch (err) {
+      setError(err.message || 'Nie udało się pobrać danych.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchTrucks = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const response = await fetch(`${API_URL}/api/trucks`);
-        if (!response.ok) throw new Error("Błąd ładowania danych.");
-        const data = await response.json();
-        setTrucks(data);
-      } catch (error) {
-        console.error("Błąd pobierania food trucków:", error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTrucks();
+    fetchProfiles();
   }, []);
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const filters = {};
+    // ZMIANA: Używamy 'cuisine' jako klucza filtra dla backendu
+    if (cuisine) filters.cuisine = cuisine;
+    if (postalCode) filters.postal_code = postalCode;
+    fetchProfiles(filters);
+  };
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1>Znajdź najlepszego Food Trucka na swoje wydarzenie</h1>
-        <p style={{fontSize: '1.2rem', color: 'var(--light-text)'}}>Przeglądaj, rezerwuj i ciesz się smakiem!</p>
-      </div>
+      {/* ZMIANA: Nowy nagłówek */}
+      <h1>Znajdź food trucka na swoją imprezę</h1>
 
-      {loading && <p>Ładowanie food trucków...</p>}
-      {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-      
+      <form onSubmit={handleSearch} style={{ display: 'flex', gap: '15px', marginBottom: '30px', padding: '20px', background: '#f9f9f9', borderRadius: '8px' }}>
+        {/* ZMIANA: Filtr rodzajów kuchni */}
+        <select value={cuisine} onChange={e => setCuisine(e.target.value)} style={{ padding: '10px' }}>
+          <option value="">Wybierz rodzaj kuchni...</option>
+          {ALL_CUISINES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <input 
+          type="text" 
+          value={postalCode}
+          onChange={e => setPostalCode(e.target.value)}
+          placeholder="Wpisz miasto lub kod pocztowy..."
+          style={{ padding: '10px' }}
+        />
+        <button type="submit" style={{ padding: '10px 20px' }}>Szukaj</button>
+      </form>
+
+      {/* ZMIANA: Zaktualizowane komunikaty */}
+      {loading && <p>Ładowanie listy food trucków...</p>}
+      {error && <p style={{ color: 'red' }}>Błąd: {error}</p>}
       {!loading && !error && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
-          {trucks.length > 0 ? (
-            trucks.map(truck => (
-              <TruckCard key={truck.profile_id} truck={truck} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+          {profiles.length > 0 ? (
+            profiles.map(profile => (
+              // ZMIANA: Użycie komponentu TruckCard
+              <TruckCard key={profile.profile_id} profile={profile} />
             ))
           ) : (
-            <p>Obecnie nie ma żadnych dostępnych food trucków.</p>
+            <p>Nie znaleziono żadnych food trucków spełniających Twoje kryteria.</p>
           )}
         </div>
       )}

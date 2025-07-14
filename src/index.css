@@ -1,49 +1,53 @@
 /* src/index.css */
 
-/* Import czcionek z Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Roboto:wght@400;500&display=swap');
+/* ZMIANA: Import nowych, bardziej pasujących czcionek */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Lato:wght@400;600&display=swap');
 
-/* Definicja globalnych zmiennych CSS dla motywu Food Truck */
+/* ZMIANA: Definicja nowej, "apetycznej" palety kolorów i czcionek */
 :root {
-  --primary-orange: #FF5722; /* Energiczny, apetyczny pomarańcz */
-  --dark-text: #2c2c2c;
-  --light-text: #6a6a6a;
-  --background-cream: #FFF8F0; /* Ciepły, kremowy biały */
-  --white: #FFFFFF;
-  --border-color: #e0e0e0;
+  /* Kolory */
+  --primary-red: #D9534F;       /* Apetyczna czerwień, główny kolor akcji */
+  --accent-yellow: #F0AD4E;     /* Musztardowa żółć, do akcentów i wyróżnień */
+  --dark-text: #343A40;         /* Ciemny grafit zamiast czerni, bardziej miękki */
+  --light-text: #6c757d;        /* Pozostaje bez zmian, dobry do opisów */
+  --background-light: #F7F5F2; /* Lekko kremowe tło, cieplejsze niż biel */
+  --white: #FFFFFF;             /* Czysta biel dla kart i kontrastu */
+  --border-color: #dee2e6;      /* Pozostaje bez zmian */
 
-  --font-heading: 'Lato', sans-serif;
-  --font-body: 'Roboto', sans-serif;
+  /* Czcionki */
+  --font-heading: 'Poppins', sans-serif; /* Nowoczesna, zaokrąglona czcionka na nagłówki */
+  --font-body: 'Lato', sans-serif;       /* Bardzo czytelna czcionka do treści */
 }
 
 /* Globalny reset i ustawienia podstawowe */
 body {
   margin: 0;
   font-family: var(--font-body);
-  background-color: var(--background-cream);
+  background-color: var(--background-light);
   color: var(--dark-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ZMIANA: Nagłówki teraz używają głównego koloru tekstu dla czytelności */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 700;
-  color: var(--dark-text);
+  color: var(--dark-text); 
 }
 
+/* ZMIANA: Linki używają nowego koloru podstawowego */
 a {
-  color: var(--primary-orange);
+  color: var(--primary-red);
   text-decoration: none;
-  font-weight: 600;
   transition: color 0.2s ease-in-out;
 }
 
 a:hover {
   text-decoration: underline;
-  filter: brightness(90%);
+  color: #a94442; /* Ciemniejszy odcień czerwieni */
 }
 
+/* ZMIANA: Przyciski używają nowego koloru podstawowego */
 button {
     cursor: pointer;
     border-radius: 8px;
@@ -52,26 +56,68 @@ button {
     font-size: 1em;
     font-weight: 500;
     font-family: inherit;
-    background-color: var(--primary-orange);
+    background-color: var(--primary-red);
     color: var(--white);
-    transition: background-color 0.25s, transform 0.1s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.25s;
 }
 
 button:hover {
-    filter: brightness(110%);
-}
-
-button:active {
-    transform: translateY(1px);
+    background-color: #a94442; /* Ciemniejszy odcień czerwieni */
 }
 
 button:disabled {
     background-color: #ccc;
-    box-shadow: none;
     cursor: not-allowed;
 }
 
 main {
     padding: 2rem 1rem;
+}
+
+
+/* === SEKCJA RESPONSIVE (BEZ ZMIAN) === */
+
+/* Dla tabletów i mniejszych urządzeń (poniżej 992px) */
+@media (max-width: 992px) {
+  main {
+    padding: 1.5rem;
+  }
+}
+
+/* Dla telefonów komórkowych (poniżej 768px) */
+@media (max-width: 768px) {
+  /* Zmniejszamy paddingi, aby zaoszczędzić miejsce */
+  main {
+    padding: 1rem;
+  }
+  
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  /* --- Style dla Nawigacji --- */
+  nav[style] { /* Używamy selektora atrybutu, by nadpisać style inline */
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  /* --- Style dla formularza wyszukiwania na stronie głównej --- */
+  form[style] { /* Używamy selektora atrybutu, by nadpisać style inline */
+    flex-direction: column;
+    align-items: stretch; /* Elementy zajmą pełną szerokość */
+  }
+
+  /* --- Style dla formularza rejestracji / logowania --- */
+  div[style*="maxWidth: 700px"], div[style*="maxWidth: 450px"] {
+    margin: 10px;
+    padding: 15px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* --- Style dla siatki kart --- */
+  div[style*="gridTemplateColumns"] {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
 }

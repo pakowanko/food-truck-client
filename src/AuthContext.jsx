@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import API_URL from './apiConfig.js';
+import API_URL from './apiConfig.js'; // Poprawny import
 
 export const AuthContext = createContext(null);
 
@@ -14,10 +14,14 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+          // --- POPRAWKA JEST TUTAJ ---
+          // Używamy zaimportowanej zmiennej API_URL
           const response = await axios.get(`${API_URL}/api/auth/profile`);
+
           setUser(response.data);
         } catch (error) {
-          console.error("Token nieważny, czyszczenie sesji", error);
+          console.error("Błąd weryfikacji tokenu lub token nieważny", error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setToken(null);
@@ -30,6 +34,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     };
+
     validateToken();
   }, [token]);
 
@@ -48,7 +53,13 @@ export const AuthProvider = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
   };
 
-  const value = useMemo(() => ({ user, token, loading, login, logout }), [user, token, loading]);
+  const value = useMemo(() => ({
+    user,
+    token,
+    loading,
+    login,
+    logout
+  }), [user, token, loading]);
 
   return (
     <AuthContext.Provider value={value}>

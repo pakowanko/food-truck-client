@@ -1,85 +1,157 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { AuthContext } from '../AuthContext.jsx'; 
-import API_URL from '../apiConfig.js';
+import { useParams, Link, useLocation } from 'react-router-dom';
+import { AuthContext } from './AuthContext.jsx';
+import api from '../api/apiConfig.js';
+
+// Komponent do wyświetlania gwiazdek (bez zmian)
+const StarRatingDisplay = ({ rating }) => {
+    const totalStars = 5;
+    let stars = [];
+    for (let i = 1; i <= totalStars; i++) {
+        stars.push(
+            <span key={i} style={{ color: i <= rating ? 'gold' : 'grey', fontSize: '1.5rem' }}>★</span>
+        );
+    }
+    return <div>{stars}</div>;
+};
 
 function TruckDetailsPage() {
-  const { truckId } = useParams();
-  const navigate = useNavigate();
+  const { profileId } = useParams();
   const location = useLocation();
-  const { user, token } = useContext(AuthContext);
-  const [truck, setTruck] = useState(null);
+  const { user } = useContext(AuthContext);
+
+  const [profile, setProfile] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  // Stany dla rezerwacji
-  const [event_date, setEventDate] = useState('');
-  const [event_details, setEventDetails] = useState('');
-  const [reservationMessage, setReservationMessage] = useState('');
 
   useEffect(() => {
-    const fetchTruckDetails = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const response = await fetch(`${API_URL}/api/trucks/${truckId}`);
-        if (!response.ok) throw new Error('Nie znaleziono food trucka.');
-        const data = await response.json();
-        setTruck(data);
+        const [profileRes, reviewsRes] = await Promise.all([
+          api.get(`/profiles/${profileId}`),
+          api.get(`/reviews/profile/${profileId}`)
+        ]);
+        
+        setProfile(profileRes.data);
+        setReviews(reviewsRes.data);
+
+        if (reviewsRes.data.length > 0) {
+          const totalRating = reviewsRes.data.reduce((acc, review) => acc + review.rating, 0);
+          setAverageRating(totalRating / reviewsRes.data.length);
+        }
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
       } finally {
         setLoading(false);
       }
     };
-    fetchTruckDetails();
-  }, [truckId]);
-
-  const handleReservation = async (e) => {
-    e.preventDefault();
-    if (!token) { setReservationMessage("Musisz być zalogowany, aby zrobić rezerwację."); return; }
-    if (user.user_type === 'owner') { setReservationMessage("Właściciele nie mogą rezerwować."); return; }
-    setReservationMessage('Wysyłanie zapytania...');
-    try {
-        const response = await fetch(`${API_URL}/api/reservations`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ truck_id: parseInt(truckId), event_date, event_details })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Nie udało się złożyć rezerwacji.");
-        setReservationMessage("Zapytanie o rezerwację złożone pomyślnie!");
-    } catch (err) {
-        setReservationMessage(`Błąd: ${err.message}`);
-    }
+    fetchData();
+  }, [profileId]);
+  
+  const styles = {
+    section: { marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px' },
+    gallery: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' },
+    galleryImage: { width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' },
+    tag: { background: '#e9e9e9', padding: '5px 10px', borderRadius: '15px' },
+    bookButton: { display: 'inline-block', padding: '15px 30px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', color: 'white', backgroundColor: '#007bff', borderRadius: '5px', textAlign: 'center' }
   };
 
-  if (loading) return <p>Ładowanie...</p>;
+  if (loading) return <p>Ładowanie profilu food trucka...</p>;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
-  if (!truck) return <p>Nie znaleziono food trucka.</p>;
+  if (!profile) return <p>Nie znaleziono tego food trucka.</p>;
 
   return (
     <div style={{ maxWidth: '900px', margin: '20px auto', padding: '20px' }}>
-      <img src={truck.main_image_url ? `${API_URL}${truck.main_image_url}` : 'https://placehold.co/900x400'} alt={truck.truck_name} style={{ width: '100%', height: '350px', objectFit: 'cover' }} />
-      <h1>{truck.truck_name}</h1>
-      <p><strong>Typ kuchni:</strong> {truck.cuisine_types}</p>
-      <p>{truck.description}</p>
-      <hr style={{ margin: '40px 0' }} />
+      {/* ZMIANA: Wyświetlanie danych food trucka */}
+      <h1>{profile.food_truck_name}</h1>
+      <p>{profile.food_truck_description}</p>
+      {profile.website_url && <p><strong>Strona WWW:</strong> <a href={profile.website_url} target="_blank" rel="noopener noreferrer">{profile.website_url}</a></p>}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '20px 0' }}>
+        <StarRatingDisplay rating={averageRating} />
+        <span>({averageRating.toFixed(2)} / 5 na podstawie {reviews.length} opinii)</span>
+      </div>
       
-      {user && (user.user_type === 'organizer') ? (
-        <div>
-            <h2>Zarezerwuj termin</h2>
-            <form onSubmit={handleReservation}>
-                <input type="date" value={event_date} onChange={e => setEventDate(e.target.value)} required />
-                <textarea value={event_details} onChange={e => setEventDetails(e.target.value)} placeholder="Opisz swój event..." required />
-                <button type="submit">Wyślij zapytanie</button>
-            </form>
-            {reservationMessage && <p>{reservationMessage}</p>}
+      {/* ZMIANA: Przycisk rezerwacji zamiast formularza */}
+      {user && user.user_type === 'organizer' && (
+        <div style={{margin: '30px 0'}}>
+            <Link to={`/booking/${profile.profile_id}`} style={styles.bookButton}>
+                Zarezerwuj ten Food Truck
+            </Link>
         </div>
-      ) : (
-        <p>
-            {user ? 'Jako właściciel nie możesz składać rezerwacji.' : <Link to="/login" state={{ from: location }}>Zaloguj się</Link>}
-            {user ? '' : ', aby zrobić rezerwację.'}
-        </p>
       )}
+
+      <section style={styles.section}>
+        <h3>Kluczowe informacje</h3>
+        <ul>
+          <li><strong>Doświadczenie w branży:</strong> {profile.experience_years || 'Nie podano'} lat</li>
+          <li><strong>Obszar działania:</strong> Do {profile.operation_radius_km || 'N/A'} km od {profile.base_location || 'N/A'}</li>
+          {profile.certifications?.length > 0 && <li><strong>Certyfikaty:</strong> {profile.certifications.join(', ')}</li>}
+        </ul>
+      </section>
+
+      {/* ZMIANA: Nowa sekcja OFERTA */}
+      {profile.offer && (
+        <section style={styles.section}>
+          <h3>Oferta</h3>
+          {profile.offer.dishes?.length > 0 && (
+            <div style={{marginBottom: '15px'}}>
+              <h4>Dania i przekąski</h4>
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: '10px'}}>
+                {profile.offer.dishes.map(item => <span key={item} style={styles.tag}>{item}</span>)}
+              </div>
+            </div>
+          )}
+          {profile.offer.drinks?.length > 0 && (
+            <div style={{marginBottom: '15px'}}>
+              <h4>Napoje</h4>
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: '10px'}}>
+                {profile.offer.drinks.map(item => <span key={item} style={styles.tag}>{item}</span>)}
+              </div>
+            </div>
+          )}
+          {profile.offer.dietary?.length >  0 && (
+            <div>
+              <h4>Opcje dietetyczne</h4>
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: '10px'}}>
+                {profile.offer.dietary.map(item => <span key={item} style={styles.tag}>{item}</span>)}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      <section style={styles.section}>
+        <h2>Galeria Food Trucka</h2>
+        {/* ZMIANA: Poprawna nazwa pola z galerii */}
+        {profile.gallery_photo_urls && profile.gallery_photo_urls.length > 0 ? (
+          <div style={styles.gallery}>
+            {profile.gallery_photo_urls.map((url, index) => (
+              <img key={index} src={url} alt={`${profile.food_truck_name} ${index + 1}`} style={styles.galleryImage} />
+            ))}
+          </div>
+        ) : (
+          <p>Właściciel nie dodał jeszcze żadnych zdjęć.</p>
+        )}
+      </section>
+
+      <section style={styles.section}>
+        <h2>Opinie</h2>
+        {reviews.length > 0 ? (
+          reviews.map(review => (
+            <div key={review.review_id} style={{ borderBottom: '1px solid #eee', paddingBottom: '15px', marginBottom: '15px' }}>
+              <StarRatingDisplay rating={review.rating} />
+              <p style={{ fontStyle: 'italic', marginTop: '5px' }}>"{review.comment}"</p>
+              <small>– {review.first_name}, {new Date(review.created_at).toLocaleDateString()}</small>
+            </div>
+          ))
+        ) : (
+          <p>Ten food truck nie ma jeszcze żadnych opinii.</p>
+        )}
+      </section>
     </div>
   );
 }
