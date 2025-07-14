@@ -1,7 +1,9 @@
+// src/pages/LoginPage.jsx
 import React, { useState, useContext } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { AuthContext } from './AuthContext.jsx'; 
-import API_URL from './apiConfig.js';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+// ZMIANA: Poprawiona ścieżka do AuthContext i apiConfig
+import { AuthContext } from '../AuthContext.jsx'; 
+import api from '../api/apiConfig.js'; 
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -26,21 +28,19 @@ function LoginPage() {
       const loginPayload = { email, password };
       console.log('Krok 2: Przygotowano dane do wysyłki:', loginPayload);
       
-      const url = `${API_URL}/api/auth/login`;
+      const url = `${api.defaults.baseURL}/auth/login`; // Używamy baseURL z instancji axios
       console.log('Krok 3: Próba wysłania zapytania na URL:', url);
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginPayload),
-      });
+      // Używamy instancji axios, którą teraz importujemy
+      const response = await api.post('/auth/login', loginPayload);
       
       console.log('Krok 4: Otrzymano odpowiedź od serwera.', response);
 
-      const data = await response.json();
+      const data = response.data; // W axios dane są w polu `data`
       console.log('Krok 5: Sparsowano dane JSON.', data);
 
-      if (response.ok) {
+      // W axios odpowiedź 2xx nie rzuca błędu, więc sprawdzamy status
+      if (response.status >= 200 && response.status < 300) {
         console.log('Krok 6: Odpowiedź jest OK. Logowanie...');
         login({
             userId: data.userId,
@@ -50,6 +50,7 @@ function LoginPage() {
         
         navigate(from, { replace: true });
       } else {
+        // Ta część jest teraz obsługiwana w bloku catch dla axios
         console.error('Krok 6b: Odpowiedź z błędem.', data);
         setLoading(false);
         setMessage(data.message || 'Wystąpił nieznany błąd.');
@@ -57,23 +58,25 @@ function LoginPage() {
     } catch (error) {
       console.error('Krok X: Wystąpił krytyczny błąd w bloku CATCH!', error);
       setLoading(false);
-      setMessage('Błąd sieci lub błąd parsowania JSON.');
+      // W axios błąd ma strukturę error.response.data.message
+      setMessage(error.response?.data?.message || 'Błąd sieci lub serwera.');
     } finally {
       console.log('Krok 7: Wykonano blok finally.');
     }
   };
 
   return (
-    <div style={{ maxWidth: '450px', margin: '50px auto', padding: '30px' }}>
+    <div style={{ maxWidth: '450px', margin: '50px auto', padding: '30px', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
       <h2 style={{ textAlign: 'center' }}>Zaloguj się</h2>
-      <form onSubmit={handleLogin}>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Hasło" required />
+      <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required style={{padding: '10px'}} />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Hasło" required style={{padding: '10px'}} />
         <button type="submit" disabled={loading}>
           {loading ? 'Logowanie...' : 'Zaloguj się'}
         </button>
       </form>
-      {message && <p style={{ color: 'red' }}>{message}</p>}
+      {message && <p style={{ color: 'red', textAlign: 'center', marginTop: '15px' }}>{message}</p>}
+      <p style={{ marginTop: '20px', textAlign: 'center' }}>Nie masz konta? <Link to="/register">Zarejestruj się</Link></p>
     </div>
   );
 }
