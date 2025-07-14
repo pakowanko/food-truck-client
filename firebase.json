@@ -1,17 +1,10 @@
-{
-  "hosting": {
-    "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
+"rewrites": [
       {
         "source": "/api/**",
         "run": {
           "serviceId": "food-truck-backend",
-          "region": "europe-west1"
+          "region": "europe-central2",
+          "serviceAccount": "firebase-hosting-invoker@pakowanko-1723651322373.iam.gserviceaccount.com"
         }
       },
       {
@@ -19,5 +12,3 @@
         "destination": "/index.html"
       }
     ]
-  }
-}
