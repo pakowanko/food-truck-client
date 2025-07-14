@@ -1,9 +1,10 @@
+// src/pages/CreateProfilePage.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AuthContext } from './AuthContext.jsx';
-import api from '../api/apiConfig.js';
+// ZMIANA: Poprawione ścieżki importu
+import { AuthContext } from '../AuthContext.jsx';
+import api from '../apiConfig.js';
 
-// ZMIANA: Nowe opcje oferty, tak jak w stronie rejestracji
 const offerOptions = {
   dishes: ["Burgery", "Pizza", "Zapiekanki", "Hot-dogi", "Frytki belgijskie", "Nachos", "Kuchnia polska", "Kuchnia azjatycka", "Kuchnia meksykańska", "Lody", "Gofry", "Churros", "Słodkie wypieki"],
   drinks: ["Kawa", "Lemoniada", "Napoje bezalkoholowe", "Piwo kraftowe"],
@@ -16,7 +17,6 @@ function CreateProfilePage() {
   const { user, token } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // ZMIANA: Stany dopasowane do profilu food trucka
   const [foodTruckName, setFoodTruckName] = useState('');
   const [description, setDescription] = useState('');
   const [baseLocation, setBaseLocation] = useState('');
@@ -33,7 +33,6 @@ function CreateProfilePage() {
   useEffect(() => {
     const loadProfileData = async () => {
       if (!isEditMode) {
-        // W trybie tworzenia, możemy wstępnie wypełnić nazwę firmy z danych użytkownika
         setFoodTruckName(user?.company_name || '');
         return;
       }
@@ -41,14 +40,13 @@ function CreateProfilePage() {
       setLoading(true);
       try {
         const { data } = await api.get(`/profiles/${profileId}`);
-        // ZMIANA: Ustawianie stanów na podstawie danych z profilu food trucka
         setFoodTruckName(data.food_truck_name || '');
         setDescription(data.food_truck_description || '');
         setBaseLocation(data.base_location || '');
         setOperationRadius(data.operation_radius_km || '');
         setExperience(data.experience_years || '');
         setWebsite(data.website_url || '');
-        setCertifications(data.certifications?.join(', ') || ''); // Łączymy tablicę w string dla textarea
+        setCertifications(data.certifications?.join(', ') || '');
         setOffer(data.offer || { dishes: [], drinks: [], dietary: [] });
       } catch (error) {
         setMessage(error.response?.data?.message || "Nie udało się pobrać danych profilu do edycji.");
@@ -78,20 +76,17 @@ function CreateProfilePage() {
     setMessage('');
 
     const formData = new FormData();
-    // ZMIANA: Dodawanie poprawnych pól do FormData
     formData.append('food_truck_name', foodTruckName);
     formData.append('food_truck_description', description);
     formData.append('base_location', baseLocation);
     formData.append('operation_radius_km', operationRadius);
     formData.append('experience_years', experience);
     formData.append('website_url', website);
-    // Dzielimy certyfikaty po przecinku, aby zapisać jako tablicę
     formData.append('certifications', JSON.stringify(certifications.split(',').map(c => c.trim()).filter(Boolean)));
     formData.append('offer', JSON.stringify(offer));
 
     if (photos) {
       for (let i = 0; i < photos.length; i++) {
-        // ZMIANA: Poprawna nazwa pola dla zdjęć
         formData.append('gallery_photos', photos[i]);
       }
     }
@@ -126,7 +121,6 @@ function CreateProfilePage() {
 
   return (
     <div style={{ maxWidth: '700px', margin: '20px auto', padding: '20px' }}>
-      {/* ZMIANA: Nowe teksty */}
       <h1>{isEditMode ? 'Edytuj Swój Profil Food Trucka' : 'Utwórz Swój Profil Food Trucka'}</h1>
       <p>Uzupełnij poniższe informacje, aby organizatorzy mogli Cię znaleźć.</p>
       
@@ -144,7 +138,6 @@ function CreateProfilePage() {
           <input type="number" value={operationRadius} onChange={(e) => setOperationRadius(e.target.value)} placeholder="Promień działania w km (np. 100)" required style={{...styles.input, marginTop: '10px'}} />
         </fieldset>
 
-        {/* ZMIANA: Nowy formularz oferty */}
         <fieldset style={styles.fieldset}>
             <legend>Oferta</legend>
             <h4>Dania i przekąski:</h4>

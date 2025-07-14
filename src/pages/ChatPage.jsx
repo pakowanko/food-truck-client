@@ -1,9 +1,10 @@
+// src/pages/ChatPage.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import io from 'socket.io-client';
-import { API_URL, SOCKET_URL } from './apiConfig.js'; // Poprawiony import
+// ZMIANA: Poprawiona ścieżka do apiConfig.js
+import { API_URL, SOCKET_URL } from '../apiConfig.js'; 
 
-// Używamy bezpośredniego adresu URL dla Socket.IO
 const socket = io(SOCKET_URL, { 
     autoConnect: false,
     reconnection: true,
@@ -44,7 +45,7 @@ function ChatPage() {
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${API_URL}/api/conversations/${conversationId}/messages`, {
+        const response = await fetch(`${API_URL || SOCKET_URL}/api/conversations/${conversationId}/messages`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) {
@@ -112,20 +113,20 @@ function ChatPage() {
       </nav>
       <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>Rozmowa</h1>
       <div className="message-list" style={{ 
-          height: '60vh', 
-          overflowY: 'scroll', 
-          border: '1px solid #ccc', 
-          padding: '10px 20px', 
-          borderRadius: '8px', 
-          marginBottom: '10px',
-          display: 'flex',
-          flexDirection: 'column'
+            height: '60vh', 
+            overflowY: 'scroll', 
+            border: '1px solid #ccc', 
+            padding: '10px 20px', 
+            borderRadius: '8px', 
+            marginBottom: '10px',
+            display: 'flex',
+            flexDirection: 'column'
       }}>
         {messages.length > 0 ? messages.map((msg, index) => (
           <div key={msg.message_id || index} style={{ 
-              alignSelf: msg.sender_id === user.userId ? 'flex-end' : 'flex-start',
-              maxWidth: '70%',
-              marginBottom: '10px'
+                alignSelf: msg.sender_id === user.userId ? 'flex-end' : 'flex-start',
+                maxWidth: '70%',
+                marginBottom: '10px'
           }}>
             <p style={{
               backgroundColor: msg.sender_id === user.userId ? '#dcf8c6' : '#f1f0f0',

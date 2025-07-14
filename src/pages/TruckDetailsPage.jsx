@@ -1,7 +1,9 @@
+// src/pages/TruckDetailsPage.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { AuthContext } from './AuthContext.jsx';
-import api from '../api/apiConfig.js';
+// ZMIANA: Poprawione ścieżki
+import { AuthContext } from '../AuthContext.jsx';
+import api from '../apiConfig.js';
 
 // Komponent do wyświetlania gwiazdek (bez zmian)
 const StarRatingDisplay = ({ rating }) => {
@@ -56,7 +58,7 @@ function TruckDetailsPage() {
     gallery: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' },
     galleryImage: { width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' },
     tag: { background: '#e9e9e9', padding: '5px 10px', borderRadius: '15px' },
-    bookButton: { display: 'inline-block', padding: '15px 30px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', color: 'white', backgroundColor: '#007bff', borderRadius: '5px', textAlign: 'center' }
+    bookButton: { display: 'inline-block', padding: '15px 30px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', color: 'white', backgroundColor: '#D9534F', borderRadius: '5px', textAlign: 'center' } // Używamy koloru z nowego CSS
   };
 
   if (loading) return <p>Ładowanie profilu food trucka...</p>;
@@ -65,7 +67,6 @@ function TruckDetailsPage() {
 
   return (
     <div style={{ maxWidth: '900px', margin: '20px auto', padding: '20px' }}>
-      {/* ZMIANA: Wyświetlanie danych food trucka */}
       <h1>{profile.food_truck_name}</h1>
       <p>{profile.food_truck_description}</p>
       {profile.website_url && <p><strong>Strona WWW:</strong> <a href={profile.website_url} target="_blank" rel="noopener noreferrer">{profile.website_url}</a></p>}
@@ -75,7 +76,6 @@ function TruckDetailsPage() {
         <span>({averageRating.toFixed(2)} / 5 na podstawie {reviews.length} opinii)</span>
       </div>
       
-      {/* ZMIANA: Przycisk rezerwacji zamiast formularza */}
       {user && user.user_type === 'organizer' && (
         <div style={{margin: '30px 0'}}>
             <Link to={`/booking/${profile.profile_id}`} style={styles.bookButton}>
@@ -93,7 +93,6 @@ function TruckDetailsPage() {
         </ul>
       </section>
 
-      {/* ZMIANA: Nowa sekcja OFERTA */}
       {profile.offer && (
         <section style={styles.section}>
           <h3>Oferta</h3>
@@ -126,7 +125,6 @@ function TruckDetailsPage() {
 
       <section style={styles.section}>
         <h2>Galeria Food Trucka</h2>
-        {/* ZMIANA: Poprawna nazwa pola z galerii */}
         {profile.gallery_photo_urls && profile.gallery_photo_urls.length > 0 ? (
           <div style={styles.gallery}>
             {profile.gallery_photo_urls.map((url, index) => (

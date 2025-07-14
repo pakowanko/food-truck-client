@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from './AuthContext.jsx';
-import api from '../api/apiConfig'; // Używamy instancji axios
+// ZMIANA: Poprawione ścieżki do plików w folderze nadrzędnym
+import { AuthContext } from '../AuthContext.jsx';
+import api from '../apiConfig.js';
 
 // Komponent gwiazdek do oceny (bez zmian)
 const StarRating = ({ rating, setRating }) => {
@@ -39,21 +40,14 @@ function DashboardPage() {
     setLoading(true);
     setError('');
     try {
-      // ZMIANA: Endpoint dla rezerwacji
-      const requestsRes = await api.get('/requests/my-bookings', {
-          headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const requestsRes = await api.get('/requests/my-bookings');
       setRequests(requestsRes.data);
 
-      // ZMIANA: Warunek dla 'food_truck_owner'
       if (user?.user_type === 'food_truck_owner') {
-        const profileRes = await api.get('/profiles/my-profile', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const profileRes = await api.get('/profiles/my-profile');
         setProfile(profileRes.data);
       }
     } catch (err) {
-      // Jeśli profil nie istnieje (błąd 404), to nie jest błąd krytyczny
       if (err.response?.status !== 404) {
           setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
           console.error("Błąd pobierania danych w panelu:", err);
@@ -77,9 +71,7 @@ function DashboardPage() {
   const handleUpdateStatus = async (requestId, newStatus) => {
     setError('');
     try {
-        await api.put(`/requests/${requestId}/status`, { status: newStatus }, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        await api.put(`/requests/${requestId}/status`, { status: newStatus });
         fetchData(); 
     } catch (err) {
         setError(err.response?.data?.message || 'Nie udało się zmienić statusu rezerwacji.');
@@ -89,9 +81,7 @@ function DashboardPage() {
   const handleInitiateChat = async (recipientId) => {
     if (!recipientId) { setError("Brak ID odbiorcy do rozpoczęcia czatu."); return; }
     try {
-        const { data } = await api.post('/conversations/initiate', { recipientId }, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const { data } = await api.post('/conversations/initiate', { recipientId });
         navigate(`/chat/${data.conversation_id}`);
     } catch(err) {
         setError(`Nie można rozpocząć czatu: ${err.response?.data?.message || err.message}`);
@@ -112,8 +102,6 @@ function DashboardPage() {
             request_id: currentRequestId,
             rating: rating,
             comment: comment
-        }, {
-            headers: { 'Authorization': `Bearer ${token}` }
         });
         alert("Dziękujemy za wystawienie opinii!");
         setIsReviewModalOpen(false);
@@ -129,7 +117,7 @@ function DashboardPage() {
   if (!user) return null;
 
   const isRequestCompleted = (req) => {
-    const eventDate = req.event_date; // ZMIANA: używamy 'event_date'
+    const eventDate = req.event_date;
     return new Date(eventDate) < new Date() && req.status === 'confirmed';
   }
 
@@ -160,7 +148,6 @@ function DashboardPage() {
       <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1000px', margin: '0 auto' }}>
         {error && <p style={{ color: 'red', border: '1px solid red', padding: '10px' }}>Błąd: {error}</p>}
         
-        {/* ZMIANA: Panel właściciela food trucka */}
         {user.user_type === 'food_truck_owner' && (
           <section>
             <h2>Mój Profil Food Trucka</h2>
@@ -180,14 +167,12 @@ function DashboardPage() {
         )}
 
         <section style={{ marginTop: '40px' }}>
-          {/* ZMIANA: Tytuł sekcji z rezerwacjami */}
           <h2>{user.user_type === 'food_truck_owner' ? 'Otrzymane Rezerwacje' : 'Moje Rezerwacje'}</h2>
           {requests.length > 0 ? (
             <ul style={{ listStyle: 'none', padding: 0 }}>
               {requests.map(req => (
                 <li key={req.request_id} style={{ border: '1px solid #ccc', padding: '15px', marginBottom: '10px', borderRadius: '5px' }}>
                   
-                  {/* ZMIANA: Widok dla właściciela food trucka */}
                   {user.user_type === 'food_truck_owner' ? (
                     <div>
                       <p><strong>Organizator:</strong> {req.organizer_first_name} {req.organizer_last_name} ({req.organizer_email})</p>
@@ -198,7 +183,6 @@ function DashboardPage() {
                   )}
                   <hr style={{margin: '10px 0'}} />
                   
-                  {/* ZMIANA: Wyświetlanie szczegółów rezerwacji zamiast zlecenia */}
                   <div style={{background: '#f9f9f9', padding: '10px', marginTop: '10px', borderRadius: '5px'}}>
                       <h4 style={{marginTop: 0}}>Szczegóły wydarzenia</h4>
                       <p><strong>Data:</strong> {new Date(req.event_date).toLocaleDateString()}</p>
@@ -212,7 +196,6 @@ function DashboardPage() {
                   <p style={{marginTop: '15px'}}><strong>Status rezerwacji:</strong> {req.status}</p>
                   
                   <div style={{ marginTop: '15px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    {/* ZMIANA: Akcje dla właściciela */}
                     {user.user_type === 'food_truck_owner' && req.status === 'pending_owner_approval' && (
                       <>
                         <button onClick={() => handleUpdateStatus(req.request_id, 'confirmed')} style={{backgroundColor: 'green', color: 'white'}}>Akceptuj</button>
@@ -223,14 +206,12 @@ function DashboardPage() {
                         <p style={{color: 'blue', fontWeight: 'bold'}}>Zaakceptowano!</p>
                     )}
                     
-                    {/* ZMIANA: Przekazywanie poprawnych ID do czatu */}
                     {user.user_type === 'food_truck_owner' ? (
                       <button onClick={() => handleInitiateChat(req.organizer_id)}>Skontaktuj się z organizatorem</button>
                     ) : (
                       <button onClick={() => handleInitiateChat(req.owner_id)}>Skontaktuj się z właścicielem</button>
                     )}
 
-                    {/* ZMIANA: Warunek dla organizatora */}
                     {user.user_type === 'organizer' && isRequestCompleted(req) && (
                         <button onClick={() => openReviewModal(req.request_id)} style={{backgroundColor: '#007bff', color: 'white'}}>Wystaw opinię</button>
                     )}

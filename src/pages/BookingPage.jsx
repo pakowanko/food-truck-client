@@ -1,13 +1,13 @@
 // src/pages/BookingPage.jsx
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '../api/apiConfig'; // Używamy instancji axios
+// ZMIANA: Poprawiona ścieżka do apiConfig.js
+import api from '../apiConfig.js'; 
 
 function BookingPage() {
   const { profileId } = useParams();
   const navigate = useNavigate();
 
-  // ZMIANA: Nowe stany formularza dopasowane do rezerwacji
   const [eventDate, setEventDate] = useState('');
   const [eventTime, setEventTime] = useState('');
   const [eventLocation, setEventLocation] = useState('');
@@ -30,7 +30,6 @@ function BookingPage() {
       return;
     }
 
-    // ZMIANA: Nowy obiekt z danymi rezerwacji
     const bookingData = {
       profile_id: parseInt(profileId),
       event_date: eventDate,
@@ -42,7 +41,6 @@ function BookingPage() {
     };
 
     try {
-      // ZMIANA: Użycie axios i poprawnego endpointu
       const response = await api.post('/requests', bookingData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -64,14 +62,11 @@ function BookingPage() {
   return (
     <div style={{ maxWidth: '700px', margin: '20px auto', padding: '20px' }}>
       <nav style={{ padding: '1rem 0' }}>
-        {/* ZMIANA: Poprawiony link i tekst */}
         <Link to={`/profile/${profileId}`}>&larr; Powrót do profilu food trucka</Link>
       </nav>
-      {/* ZMIANA: Nowe nagłówki */}
       <h1>Zarezerwuj Food Trucka</h1>
       <p>Proszę wypełnić szczegóły Twojego wydarzenia.</p>
 
-      {/* ZMIANA: Całkowicie nowy formularz */}
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
         <div>
           <label>Data wydarzenia:</label>

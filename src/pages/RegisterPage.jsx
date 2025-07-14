@@ -1,8 +1,9 @@
+// src/pages/RegisterPage.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../api/apiConfig'; // Zakładam, że masz taki plik do konfiguracji API
+// ZMIANA: Poprawiona ścieżka do apiConfig.js
+import api from '../apiConfig.js'; 
 
-// ZMIANA: Nowe opcje dla formularza oferty food trucka
 const offerOptions = {
   dishes: [
     "Burgery", "Pizza", "Zapiekanki", "Hot-dogi", "Frytki belgijskie", 
@@ -20,7 +21,6 @@ const offerOptions = {
 function RegisterPage() {
   const navigate = useNavigate();
   
-  // ZMIANA: Zaktualizowane stany
   const [userType, setUserType] = useState('organizer'); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +38,6 @@ function RegisterPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // Stany dla właściciela food trucka
   const [baseLocation, setBaseLocation] = useState('');
   const [operationRadius, setOperationRadius] = useState('');
   const [offer, setOffer] = useState({
@@ -52,7 +51,6 @@ function RegisterPage() {
     { code: 'CZ', name: 'Czechy' }, { code: 'SK', name: 'Słowacja' },
   ];
 
-  // ZMIANA: Nowa, uniwersalna funkcja do obsługi checkboxów oferty
   const handleOfferChange = (category, value, checked) => {
     setOffer(prevOffer => {
       const currentCategoryItems = prevOffer[category];
@@ -79,14 +77,12 @@ function RegisterPage() {
     setLoading(true);
     setMessage('');
 
-    // ZMIANA: Nowy obiekt z danymi do rejestracji
     const registrationData = {
         email, password, user_type: userType,
         first_name: firstName, last_name: lastName, phone_number: phoneNumber,
         company_name: isCompany || userType === 'food_truck_owner' ? companyName : null,
         nip: isCompany || userType === 'food_truck_owner' ? nip : null,
         country_code: countryCode,
-        // Pola specyficzne dla właściciela food trucka
         ...(userType === 'food_truck_owner' && {
             base_location: baseLocation,
             operation_radius_km: operationRadius,
@@ -109,7 +105,6 @@ function RegisterPage() {
     <div style={{ maxWidth: '700px', margin: '20px auto', padding: '20px', fontFamily: 'sans-serif' }}>
       <h1>Utwórz nowe konto</h1>
       
-      {/* ZMIANA: Zaktualizowane etykiety i wartości dla typu konta */}
       <div style={{ marginBottom: '20px' }}>
         <h3>Wybierz typ konta:</h3>
         <label style={{ marginRight: '20px' }}>
@@ -123,7 +118,6 @@ function RegisterPage() {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
             <legend>Dane Podstawowe</legend>
-            {/* Pola podstawowe bez zmian */}
             <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Imię" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
             <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nazwisko" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adres e-mail" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
@@ -138,7 +132,6 @@ function RegisterPage() {
             <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Potwierdź hasło" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
         </fieldset>
 
-        {/* ZMIANA: Warunek dla organizatora */}
         {userType === 'organizer' && (
             <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
                 <legend>Dane Firmy (Opcjonalne)</legend>
@@ -152,7 +145,6 @@ function RegisterPage() {
             </fieldset>
         )}
 
-        {/* ZMIANA: Nowy, rozbudowany formularz dla właściciela food trucka */}
         {userType === 'food_truck_owner' && (
             <>
                 <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
