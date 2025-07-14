@@ -1,4 +1,12 @@
-"rewrites": [
+{
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
       {
         "source": "/api/**",
         "run": {
@@ -12,3 +20,5 @@
         "destination": "/index.html"
       }
     ]
+  }
+}
