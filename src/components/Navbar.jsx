@@ -1,9 +1,9 @@
-// src/Navbar.jsx
+// src/components/Navbar.jsx
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from './AuthContext.jsx';
+// ZMIANA: Poprawiona ścieżka do AuthContext.jsx
+import { AuthContext } from '../AuthContext.jsx';
 
-// Style pozostają bez zmian
 const styles = {
   nav: {
     display: 'flex',
@@ -12,12 +12,12 @@ const styles = {
     padding: '1rem 2rem',
     backgroundColor: 'var(--white)',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    borderBottom: `3px solid var(--primary-yellow)`
+    borderBottom: `3px solid var(--accent-yellow)` // Używamy nowej zmiennej kolorystycznej
   },
   logo: {
     fontWeight: 'bold',
     fontSize: '1.5rem',
-    color: 'var(--primary-blue)',
+    color: 'var(--dark-text)', // Używamy głównego koloru tekstu
   },
   navLinks: {
     display: 'flex',
@@ -30,8 +30,8 @@ const styles = {
   },
   logoutButton: {
     backgroundColor: 'transparent',
-    color: 'var(--primary-blue)',
-    border: '1px solid var(--primary-blue)',
+    color: 'var(--primary-red)', // Używamy nowego koloru akcji
+    border: '1px solid var(--primary-red)',
   }
 };
 
@@ -44,7 +44,6 @@ function Navbar() {
     navigate('/');
   };
   
-  // ZMIANA: Dodano obiekt do tłumaczenia nazw ról
   const roleDisplayMap = {
     organizer: 'Organizator',
     food_truck_owner: 'Właściciel'
@@ -52,7 +51,6 @@ function Navbar() {
 
   return (
     <nav style={styles.nav}>
-      {/* ZMIANA: Nowa nazwa i logo aplikacji */}
       <Link to="/" style={styles.logo}>
         🚚 BookTheTruck
       </Link>
@@ -60,7 +58,6 @@ function Navbar() {
         {user ? (
           <>
             <span style={styles.userInfo}>
-              {/* ZMIANA: Wyświetlanie przetłumaczonej roli */}
               Witaj, {user.email} (Rola: {roleDisplayMap[user.user_type] || user.user_type})
             </span>
             <Link to="/dashboard">Mój Panel</Link>
