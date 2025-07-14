@@ -1,10 +1,9 @@
+// src/pages/DashboardPage.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// ZMIANA: Poprawione ścieżki do plików w folderze nadrzędnym
 import { AuthContext } from '../AuthContext.jsx';
-import { api } from '../apiConfig.js'; 
+import { api } from '../apiConfig.js';
 
-// Komponent gwiazdek do oceny (bez zmian)
 const StarRating = ({ rating, setRating }) => {
     return (
         <div>
@@ -35,37 +34,35 @@ function DashboardPage() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   
-  const fetchData = async () => {
-    if (!token) return;
-    setLoading(true);
-    setError('');
-    try {
-      const requestsRes = await api.get('/requests/my-bookings');
-      setRequests(requestsRes.data);
-
-      if (user?.user_type === 'food_truck_owner') {
-        const profileRes = await api.get('/profiles/my-profile');
-        setProfile(profileRes.data);
-      }
-    } catch (err) {
-      if (err.response?.status !== 404) {
-          setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
-          console.error("Błąd pobierania danych w panelu:", err);
-      } else {
-          setProfile(null);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (authLoading) return;
-    if (!user || !token) {
+    const fetchData = async () => {
+      if (!token) return;
+      setLoading(true);
+      setError('');
+      try {
+        const requestsRes = await api.get('/requests/my-bookings');
+        setRequests(Array.isArray(requestsRes.data) ? requestsRes.data : []);
+
+        if (user?.user_type === 'food_truck_owner') {
+          const profileRes = await api.get('/profiles/my-profile');
+          setProfile(profileRes.data);
+        }
+      } catch (err) {
+        if (err.response?.status !== 404) {
+            setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
+            console.error("Błąd pobierania danych w panelu:", err);
+        } else {
+            setProfile(null);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (!authLoading && user) {
+      fetchData();
+    } else if (!authLoading && !user) {
       navigate('/login');
-      return;
     }
-    fetchData();
   }, [authLoading, user, token, navigate]);
 
   const handleUpdateStatus = async (requestId, newStatus) => {
@@ -112,14 +109,14 @@ function DashboardPage() {
         setError(err.response?.data?.message || 'Nie udało się dodać opinii.');
     }
   };
-
-  if (authLoading || loading) return <p style={{textAlign: 'center', marginTop: '50px'}}>Ładowanie panelu...</p>;
-  if (!user) return null;
-
+  
   const isRequestCompleted = (req) => {
     const eventDate = req.event_date;
     return new Date(eventDate) < new Date() && req.status === 'confirmed';
   }
+
+  if (authLoading || loading) return <p style={{textAlign: 'center', marginTop: '50px'}}>Ładowanie panelu...</p>;
+  if (!user) return null;
 
   return (
     <>
@@ -144,10 +141,8 @@ function DashboardPage() {
           </div>
         </div>
       )}
-
       <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1000px', margin: '0 auto' }}>
         {error && <p style={{ color: 'red', border: '1px solid red', padding: '10px' }}>Błąd: {error}</p>}
-        
         {user.user_type === 'food_truck_owner' && (
           <section>
             <h2>Mój Profil Food Trucka</h2>
@@ -165,14 +160,12 @@ function DashboardPage() {
             )}
           </section>
         )}
-
         <section style={{ marginTop: '40px' }}>
           <h2>{user.user_type === 'food_truck_owner' ? 'Otrzymane Rezerwacje' : 'Moje Rezerwacje'}</h2>
-          {requests.length > 0 ? (
+          {Array.isArray(requests) && requests.length > 0 ? (
             <ul style={{ listStyle: 'none', padding: 0 }}>
               {requests.map(req => (
                 <li key={req.request_id} style={{ border: '1px solid #ccc', padding: '15px', marginBottom: '10px', borderRadius: '5px' }}>
-                  
                   {user.user_type === 'food_truck_owner' ? (
                     <div>
                       <p><strong>Organizator:</strong> {req.organizer_first_name} {req.organizer_last_name} ({req.organizer_email})</p>
@@ -182,7 +175,6 @@ function DashboardPage() {
                     <p><strong>Food Truck:</strong> {req.food_truck_name}</p>
                   )}
                   <hr style={{margin: '10px 0'}} />
-                  
                   <div style={{background: '#f9f9f9', padding: '10px', marginTop: '10px', borderRadius: '5px'}}>
                       <h4 style={{marginTop: 0}}>Szczegóły wydarzenia</h4>
                       <p><strong>Data:</strong> {new Date(req.event_date).toLocaleDateString()}</p>
@@ -192,9 +184,7 @@ function DashboardPage() {
                       <p><strong>Liczba gości:</strong> {req.guest_count}</p>
                       <p><strong>Opis:</strong> {req.event_description}</p>
                   </div>
-                  
                   <p style={{marginTop: '15px'}}><strong>Status rezerwacji:</strong> {req.status}</p>
-                  
                   <div style={{ marginTop: '15px', display: 'flex', gap: '10px', alignItems: 'center' }}>
                     {user.user_type === 'food_truck_owner' && req.status === 'pending_owner_approval' && (
                       <>
@@ -205,13 +195,11 @@ function DashboardPage() {
                     {user.user_type === 'food_truck_owner' && req.status === 'confirmed' && (
                         <p style={{color: 'blue', fontWeight: 'bold'}}>Zaakceptowano!</p>
                     )}
-                    
                     {user.user_type === 'food_truck_owner' ? (
                       <button onClick={() => handleInitiateChat(req.organizer_id)}>Skontaktuj się z organizatorem</button>
                     ) : (
                       <button onClick={() => handleInitiateChat(req.owner_id)}>Skontaktuj się z właścicielem</button>
                     )}
-
                     {user.user_type === 'organizer' && isRequestCompleted(req) && (
                         <button onClick={() => openReviewModal(req.request_id)} style={{backgroundColor: '#007bff', color: 'white'}}>Wystaw opinię</button>
                     )}
