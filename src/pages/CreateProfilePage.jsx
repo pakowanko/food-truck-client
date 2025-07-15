@@ -1,9 +1,8 @@
 // src/pages/CreateProfilePage.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-// ZMIANA: Poprawione ścieżki importu
 import { AuthContext } from '../AuthContext.jsx';
-import { api } from '../apiConfig.js'; 
+import { api } from '../apiConfig.js';
 
 const offerOptions = {
   dishes: ["Burgery", "Pizza", "Zapiekanki", "Hot-dogi", "Frytki belgijskie", "Nachos", "Kuchnia polska", "Kuchnia azjatycka", "Kuchnia meksykańska", "Lody", "Gofry", "Churros", "Słodkie wypieki"],
@@ -21,11 +20,11 @@ function CreateProfilePage() {
   const [description, setDescription] = useState('');
   const [baseLocation, setBaseLocation] = useState('');
   const [operationRadius, setOperationRadius] = useState('');
-  const [experience, setExperience] = useState('');
   const [website, setWebsite] = useState('');
-  const [certifications, setCertifications] = useState('');
   const [offer, setOffer] = useState({ dishes: [], drinks: [], dietary: [] });
   const [photos, setPhotos] = useState(null);
+  // ZMIANA: Usunęliśmy 'experience' i 'certifications', dodajemy 'longTermRental'
+  const [longTermRental, setLongTermRental] = useState(false);
 
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,10 +43,10 @@ function CreateProfilePage() {
         setDescription(data.food_truck_description || '');
         setBaseLocation(data.base_location || '');
         setOperationRadius(data.operation_radius_km || '');
-        setExperience(data.experience_years || '');
         setWebsite(data.website_url || '');
-        setCertifications(data.certifications?.join(', ') || '');
         setOffer(data.offer || { dishes: [], drinks: [], dietary: [] });
+        // ZMIANA: Wczytujemy nową opcję
+        setLongTermRental(data.long_term_rental_available || false);
       } catch (error) {
         setMessage(error.response?.data?.message || "Nie udało się pobrać danych profilu do edycji.");
       } finally {
@@ -80,10 +79,10 @@ function CreateProfilePage() {
     formData.append('food_truck_description', description);
     formData.append('base_location', baseLocation);
     formData.append('operation_radius_km', operationRadius);
-    formData.append('experience_years', experience);
     formData.append('website_url', website);
-    formData.append('certifications', JSON.stringify(certifications.split(',').map(c => c.trim()).filter(Boolean)));
     formData.append('offer', JSON.stringify(offer));
+    // ZMIANA: Dodajemy nową daną do wysyłki
+    formData.append('long_term_rental_available', longTermRental);
 
     if (photos) {
       for (let i = 0; i < photos.length; i++) {
@@ -95,13 +94,13 @@ function CreateProfilePage() {
     const url = isEditMode ? `/profiles/${profileId}` : '/profiles';
 
     try {
-      const response = await api[method](url, formData, {
+      await api[method](url, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
-      setMessage(isEditMode ? 'Profil zaktualizowany!' : 'Profil utworzony!');
+      setMessage(isEditMode ? 'Profil zaktualizowany!' : 'Profil utworzony pomyślnie!');
       setTimeout(() => navigate('/dashboard'), 2000);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Wystąpił błąd.');
@@ -143,27 +142,34 @@ function CreateProfilePage() {
             <h4>Dania i przekąski:</h4>
             <div style={styles.checkboxGroup}>
                 {offerOptions.dishes.map(item => (
-                    <label key={item}><input type="checkbox" checked={offer.dishes.includes(item)} onChange={(e) => handleOfferChange('dishes', item, e.target.checked)} /> {item}</label>
+                    <label key={item}><input type="checkbox" checked={offer.dishes?.includes(item)} onChange={(e) => handleOfferChange('dishes', item, e.target.checked)} /> {item}</label>
                 ))}
             </div>
             <h4 style={{marginTop: '20px'}}>Napoje:</h4>
             <div style={styles.checkboxGroup}>
                 {offerOptions.drinks.map(item => (
-                    <label key={item}><input type="checkbox" checked={offer.drinks.includes(item)} onChange={(e) => handleOfferChange('drinks', item, e.target.checked)} /> {item}</label>
+                    <label key={item}><input type="checkbox" checked={offer.drinks?.includes(item)} onChange={(e) => handleOfferChange('drinks', item, e.target.checked)} /> {item}</label>
                 ))}
             </div>
             <h4 style={{marginTop: '20px'}}>Opcje dietetyczne:</h4>
             <div style={styles.checkboxGroup}>
                 {offerOptions.dietary.map(item => (
-                    <label key={item}><input type="checkbox" checked={offer.dietary.includes(item)} onChange={(e) => handleOfferChange('dietary', item, e.target.checked)} /> {item}</label>
+                    <label key={item}><input type="checkbox" checked={offer.dietary?.includes(item)} onChange={(e) => handleOfferChange('dietary', item, e.target.checked)} /> {item}</label>
                 ))}
             </div>
         </fieldset>
 
+        {/* ZMIANA: Usunięto starą sekcję i dodano nową */}
         <fieldset style={styles.fieldset}>
-            <legend>Doświadczenie i certyfikaty</legend>
-            <input type="number" value={experience} onChange={(e) => setExperience(e.target.value)} placeholder="Lata doświadczenia w branży" required style={styles.input} />
-            <textarea value={certifications} onChange={(e) => setCertifications(e.target.value)} placeholder="Posiadane certyfikaty, wyróżnienia (oddzielone przecinkami)" style={{...styles.input, minHeight: '80px', marginTop: '10px'}} />
+            <legend>Opcje dodatkowe</legend>
+            <label>
+                <input 
+                    type="checkbox" 
+                    checked={longTermRental} 
+                    onChange={(e) => setLongTermRental(e.target.checked)} 
+                />
+                Oferuję możliwość wynajmu długoterminowego (np. na kilka tygodni/miesięcy)
+            </label>
         </fieldset>
         
         <fieldset style={styles.fieldset}>
