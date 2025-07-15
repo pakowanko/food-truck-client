@@ -133,7 +133,7 @@ function CreateProfilePage() {
 
         <fieldset style={styles.fieldset}>
           <legend>Obszar działania</legend>
-          <input value={baseLocation} onChange={(e) => setBaseLocation(e.target.value)} placeholder="Główna lokalizacja (np. Warszawa)" required style={styles.input} />
+          <input value={baseLocation} onChange={(e) => setBaseLocation(e.target.value)} placeholder="Kod pocztowy lub Miasto" required style={styles.input} />
           <input type="number" value={operationRadius} onChange={(e) => setOperationRadius(e.target.value)} placeholder="Promień działania w km (np. 100)" required style={{...styles.input, marginTop: '10px'}} />
         </fieldset>
 
