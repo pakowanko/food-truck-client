@@ -11,8 +11,7 @@
         "source": "/api/**",
         "run": {
           "serviceId": "food-truck-backend",
-          "region": "europe-west1",
-          "serviceAccount": "firebase-hosting-invoker@pakowanko-1723651322373.iam.gserviceaccount.com"
+          "region": "europe-west1"
         }
       },
       {
