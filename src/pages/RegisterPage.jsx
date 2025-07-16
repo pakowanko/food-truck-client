@@ -1,4 +1,3 @@
-// src/pages/RegisterPage.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../apiConfig.js';
@@ -41,7 +40,6 @@ function RegisterPage() {
     setLoading(true);
     setMessage('');
 
-    // ZMIANA: Uproszczony obiekt, wysyła tylko dane użytkownika i firmy
     const registrationData = {
         email, password, user_type: userType,
         first_name: firstName, last_name: lastName, phone_number: phoneNumber,
@@ -105,7 +103,6 @@ function RegisterPage() {
             </fieldset>
         )}
 
-        {/* ZMIANA: Uproszczony formularz dla właściciela food trucka */}
         {userType === 'food_truck_owner' && (
             <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
                 <legend>Dane Firmy</legend>
@@ -115,7 +112,12 @@ function RegisterPage() {
             </fieldset>
         )}
         
-        <div style={{ marginTop: '10px' }}><label><input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} /> Akceptuję regulamin serwisu.</label></div>
+        <div style={{ marginTop: '10px' }}>
+          <label>
+            <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} /> 
+            Akceptuję <Link to="/regulamin" target="_blank" rel="noopener noreferrer">regulamin serwisu</Link>.
+          </label>
+        </div>
         
         {message && <p style={{ color: message.startsWith('Rejestracja') ? 'green' : 'red', textAlign: 'center' }}>{message}</p>}
 

@@ -2,18 +2,21 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './AuthContext.jsx';
 
-// Import stron i komponentów
+// Import komponentów
+import Navbar from './components/Navbar.jsx';
+import Footer from './components/Footer.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+
+// Import stron
 import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
-import Navbar from './components/Navbar.jsx';
-import ProtectedRoute from './components/ProtectedRoute.jsx';
 import CreateProfilePage from './pages/CreateProfilePage.jsx';
 import TruckDetailsPage from './pages/TruckDetailsPage.jsx';
 import BookingPage from './pages/BookingPage.jsx';
-
-// ZMIANA: Import nowych komponentów czatu
+import TermsPage from './pages/TermsPage.jsx';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
 import ChatLayout from './pages/ChatLayout.jsx';
 import ConversationView from './pages/ConversationView.jsx';
 
@@ -29,6 +32,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile/:profileId" element={<TruckDetailsPage />} />
+            <Route path="/regulamin" element={<TermsPage />} />
+            <Route path="/polityka-prywatnosci" element={<PrivacyPolicyPage />} />
 
             {/* Trasy chronione */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -36,13 +41,14 @@ function App() {
             <Route path="/edit-profile/:profileId" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
             <Route path="/booking/:profileId" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
             
-            {/* ZMIANA: Nowa, zagnieżdżona struktura tras dla czatu */}
+            {/* Zagnieżdżona trasa dla czatu */}
             <Route path="/chat" element={<ProtectedRoute><ChatLayout /></ProtectedRoute>}>
               <Route path=":conversationId" element={<ConversationView />} />
             </Route>
 
           </Routes>
         </main>
+        <Footer />
       </Router>
     </AuthProvider>
   );
