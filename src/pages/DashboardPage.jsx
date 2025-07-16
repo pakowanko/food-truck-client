@@ -1,4 +1,3 @@
-// src/pages/DashboardPage.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext.jsx';
@@ -146,11 +145,19 @@ function DashboardPage() {
         {user.user_type === 'food_truck_owner' && (
           <section>
             <h2>Mój Profil Food Trucka</h2>
+            {/* ZMIANA: Ulepszony widok profilu ze zdjęciem */}
             {profile ? (
-              <div style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
-                <h3>{profile.food_truck_name}</h3>
-                <p>{profile.food_truck_description}</p>
-                <Link to={`/edit-profile/${profile.profile_id}`}>Edytuj profil</Link>
+              <div style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '5px', display: 'flex', gap: '20px', alignItems: 'center' }}>
+                <img 
+                  src={profile.profile_image_url || 'https://placehold.co/100x100/F0AD4E/343A40?text=Brak+zdjęcia'} 
+                  alt={profile.food_truck_name}
+                  style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                />
+                <div>
+                  <h3>{profile.food_truck_name}</h3>
+                  <p style={{margin: '5px 0'}}>{profile.food_truck_description}</p>
+                  <Link to={`/edit-profile/${profile.profile_id}`}>Edytuj profil</Link>
+                </div>
               </div>
             ) : (
               <div>

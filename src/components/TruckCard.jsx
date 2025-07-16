@@ -30,7 +30,7 @@ const styles = {
         height: '180px',
         objectFit: 'cover',
         display: 'block',
-        backgroundColor: '#f0f0f0' // Tło dla placeholderów
+        backgroundColor: '#f0f0f0'
     },
     cardBody: {
         padding: '16px',
@@ -55,13 +55,14 @@ const styles = {
 };
 
 const TruckCard = ({ profile }) => {
-  // ZMIANA: Tworzymy opis z oferty
+  // Bierzemy 3 pierwsze dania jako podsumowanie oferty
   const offerSummary = profile.offer?.dishes?.slice(0, 3).join(', ') || 'Różnorodna kuchnia';
-  // ZMIANA: Używamy poprawnego pola na zdjęcie i generujemy placeholder
+  
+  // Poprawiamy obsługę obrazka
   const imageUrl = profile.profile_image_url || `https://placehold.co/400x250/F0AD4E/343A40?text=${encodeURIComponent(profile.food_truck_name)}`;
 
   return (
-    <Link to={`/profile/${profile.profile_id}`} style={styles.card} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+    <Link to={`/profile/${profile.profile_id}`} style={styles.card}>
       <img 
         src={imageUrl} 
         alt={profile.food_truck_name} 
@@ -71,8 +72,7 @@ const TruckCard = ({ profile }) => {
         <h3 style={styles.cardTitle}>{profile.food_truck_name}</h3>
         <StarRatingDisplay rating={profile.average_rating} count={profile.review_count} />
         <p style={styles.cardText}>
-          {/* ZMIANA: Wyświetlamy ofertę */}
-          <strong>Oferta:</strong> {offerSummary}{profile.offer?.dishes?.length > 3 ? '...' : ''}
+          <strong>Główne dania:</strong> {offerSummary}{profile.offer?.dishes?.length > 3 ? '...' : ''}
         </p>
         <span style={styles.cardLink}>
           Zobacz szczegóły &rarr;
