@@ -1,8 +1,6 @@
-// src/pages/BookingPage.jsx
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-// ZMIANA: Poprawiona ścieżka do apiConfig.js
-import { api } from '../apiConfig.js'; 
+import { api } from '../apiConfig.js';
 
 function BookingPage() {
   const { profileId } = useParams();
@@ -13,6 +11,7 @@ function BookingPage() {
   const [eventLocation, setEventLocation] = useState('');
   const [eventType, setEventType] = useState('');
   const [guestCount, setGuestCount] = useState('');
+  const [utilityCosts, setUtilityCosts] = useState('');
   const [eventDescription, setEventDescription] = useState('');
   
   const [message, setMessage] = useState('');
@@ -21,7 +20,7 @@ function BookingPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
-    setMessage('Wysyłanie prośby o rezerwację...');
+    setMessage('');
 
     const token = localStorage.getItem('token');
     if (!token) {
@@ -36,24 +35,18 @@ function BookingPage() {
       event_time: eventTime,
       event_location: eventLocation,
       event_type: eventType,
-      guest_count: parseInt(guestCount),
+      guest_count: parseInt(guestCount) || 0,
+      utility_costs: parseFloat(utilityCosts) || 0.00,
       event_description: eventDescription,
     };
 
     try {
-      const response = await api.post('/requests', bookingData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
+      await api.post('/requests', bookingData);
       alert('Twoja prośba o rezerwację została wysłana!');
       navigate('/dashboard');
-
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Błąd sieci lub serwera.';
       setMessage(`Błąd: ${errorMessage}`);
-      console.error('Błąd podczas wysyłania rezerwacji:', error);
     } finally {
       setLoading(false);
     }
@@ -95,6 +88,10 @@ function BookingPage() {
         <div>
           <label>Szacunkowa liczba gości:</label>
           <input type="number" value={guestCount} onChange={e => setGuestCount(e.target.value)} placeholder="np. 150" required />
+        </div>
+        <div>
+          <label>Twoja propozycja pokrycia kosztów mediów (prąd, woda) (zł):</label>
+          <input type="number" step="0.01" value={utilityCosts} onChange={e => setUtilityCosts(e.target.value)} placeholder="np. 150.00" />
         </div>
         <div>
           <label>Opis wydarzenia i specjalne wymagania:</label>
