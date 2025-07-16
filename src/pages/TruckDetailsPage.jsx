@@ -1,11 +1,8 @@
-// src/pages/TruckDetailsPage.jsx
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
-// ZMIANA: Poprawione ścieżki
+import { useParams, Link } from 'react-router-dom';
 import { AuthContext } from '../AuthContext.jsx';
-import { api } from '../apiConfig.js'; 
+import { api } from '../apiConfig.js';
 
-// Komponent do wyświetlania gwiazdek (bez zmian)
 const StarRatingDisplay = ({ rating }) => {
     const totalStars = 5;
     let stars = [];
@@ -19,7 +16,6 @@ const StarRatingDisplay = ({ rating }) => {
 
 function TruckDetailsPage() {
   const { profileId } = useParams();
-  const location = useLocation();
   const { user } = useContext(AuthContext);
 
   const [profile, setProfile] = useState(null);
@@ -38,9 +34,9 @@ function TruckDetailsPage() {
         ]);
         
         setProfile(profileRes.data);
-        setReviews(reviewsRes.data);
+        setReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
 
-        if (reviewsRes.data.length > 0) {
+        if (reviewsRes.data && reviewsRes.data.length > 0) {
           const totalRating = reviewsRes.data.reduce((acc, review) => acc + review.rating, 0);
           setAverageRating(totalRating / reviewsRes.data.length);
         }
@@ -58,7 +54,7 @@ function TruckDetailsPage() {
     gallery: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' },
     galleryImage: { width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' },
     tag: { background: '#e9e9e9', padding: '5px 10px', borderRadius: '15px' },
-    bookButton: { display: 'inline-block', padding: '15px 30px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', color: 'white', backgroundColor: '#D9534F', borderRadius: '5px', textAlign: 'center' } // Używamy koloru z nowego CSS
+    bookButton: { display: 'inline-block', padding: '15px 30px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', color: 'white', backgroundColor: '#D9534F', borderRadius: '5px', textAlign: 'center' }
   };
 
   if (loading) return <p>Ładowanie profilu food trucka...</p>;
@@ -67,15 +63,33 @@ function TruckDetailsPage() {
 
   return (
     <div style={{ maxWidth: '900px', margin: '20px auto', padding: '20px' }}>
+      
+      {/* SEKCJA 1: Nagłówek i podstawowe informacje */}
       <h1>{profile.food_truck_name}</h1>
       <p>{profile.food_truck_description}</p>
+      <p style={{ color: '#6c757d' }}>
+        <strong>Lokalizacja:</strong> {profile.base_location} (działamy w promieniu {profile.operation_radius_km || 'N/A'} km)
+      </p>
       {profile.website_url && <p><strong>Strona WWW:</strong> <a href={profile.website_url} target="_blank" rel="noopener noreferrer">{profile.website_url}</a></p>}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '20px 0' }}>
+      {/* SEKCJA 2: Opinie i gwiazdki */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '20px 0', paddingBottom: '20px', borderBottom: '1px solid #eee' }}>
         <StarRatingDisplay rating={averageRating} />
         <span>({averageRating.toFixed(2)} / 5 na podstawie {reviews.length} opinii)</span>
       </div>
-      
+      {reviews.length > 0 ? (
+          <section>
+            {reviews.map(review => (
+              <div key={review.review_id} style={{ borderBottom: '1px solid #eee', paddingBottom: '15px', marginBottom: '15px' }}>
+                <StarRatingDisplay rating={review.rating} />
+                <p style={{ fontStyle: 'italic', marginTop: '5px' }}>"{review.comment}"</p>
+                <small>– {review.first_name}, {new Date(review.created_at).toLocaleDateString()}</small>
+              </div>
+            ))}
+          </section>
+      ) : <p>Ten food truck nie ma jeszcze żadnych opinii.</p>}
+
+      {/* SEKCJA 3: Przycisk rezerwacji */}
       {user && user.user_type === 'organizer' && (
         <div style={{margin: '30px 0'}}>
             <Link to={`/booking/${profile.profile_id}`} style={styles.bookButton}>
@@ -84,15 +98,7 @@ function TruckDetailsPage() {
         </div>
       )}
 
-      <section style={styles.section}>
-        <h3>Kluczowe informacje</h3>
-        <ul>
-          <li><strong>Doświadczenie w branży:</strong> {profile.experience_years || 'Nie podano'} lat</li>
-          <li><strong>Obszar działania:</strong> Do {profile.operation_radius_km || 'N/A'} km od {profile.base_location || 'N/A'}</li>
-          {profile.certifications?.length > 0 && <li><strong>Certyfikaty:</strong> {profile.certifications.join(', ')}</li>}
-        </ul>
-      </section>
-
+      {/* SEKCJA 4: Oferta */}
       {profile.offer && (
         <section style={styles.section}>
           <h3>Oferta</h3>
@@ -112,7 +118,7 @@ function TruckDetailsPage() {
               </div>
             </div>
           )}
-          {profile.offer.dietary?.length >  0 && (
+          {profile.offer.dietary?.length > 0 && (
             <div>
               <h4>Opcje dietetyczne</h4>
               <div style={{display: 'flex', flexWrap: 'wrap', gap: '10px'}}>
@@ -123,6 +129,7 @@ function TruckDetailsPage() {
         </section>
       )}
 
+      {/* SEKCJA 5: Galeria */}
       <section style={styles.section}>
         <h2>Galeria Food Trucka</h2>
         {profile.gallery_photo_urls && profile.gallery_photo_urls.length > 0 ? (
@@ -133,21 +140,6 @@ function TruckDetailsPage() {
           </div>
         ) : (
           <p>Właściciel nie dodał jeszcze żadnych zdjęć.</p>
-        )}
-      </section>
-
-      <section style={styles.section}>
-        <h2>Opinie</h2>
-        {reviews.length > 0 ? (
-          reviews.map(review => (
-            <div key={review.review_id} style={{ borderBottom: '1px solid #eee', paddingBottom: '15px', marginBottom: '15px' }}>
-              <StarRatingDisplay rating={review.rating} />
-              <p style={{ fontStyle: 'italic', marginTop: '5px' }}>"{review.comment}"</p>
-              <small>– {review.first_name}, {new Date(review.created_at).toLocaleDateString()}</small>
-            </div>
-          ))
-        ) : (
-          <p>Ten food truck nie ma jeszcze żadnych opinii.</p>
         )}
       </section>
     </div>

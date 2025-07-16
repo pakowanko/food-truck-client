@@ -25,6 +25,7 @@ function DashboardPage() {
 
   const [requests, setRequests] = useState([]);
   const [profile, setProfile] = useState(null);
+  const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -39,13 +40,16 @@ function DashboardPage() {
       setLoading(true);
       setError('');
       try {
-        const requestsRes = await api.get('/requests/my-bookings');
+        const [requestsRes, profileRes, conversationsRes] = await Promise.all([
+            api.get('/requests/my-bookings'),
+            user?.user_type === 'food_truck_owner' ? api.get('/profiles/my-profile') : Promise.resolve(null),
+            api.get('/conversations')
+        ]);
+        
         setRequests(Array.isArray(requestsRes.data) ? requestsRes.data : []);
+        if (profileRes) setProfile(profileRes.data);
+        setConversations(Array.isArray(conversationsRes.data) ? conversationsRes.data : []);
 
-        if (user?.user_type === 'food_truck_owner') {
-          const profileRes = await api.get('/profiles/my-profile');
-          setProfile(profileRes.data);
-        }
       } catch (err) {
         if (err.response?.status !== 404) {
             setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
@@ -57,6 +61,7 @@ function DashboardPage() {
         setLoading(false);
       }
     };
+
     if (!authLoading && user) {
       fetchData();
     } else if (!authLoading && !user) {
@@ -74,13 +79,12 @@ function DashboardPage() {
     }
   };
 
-  const handleInitiateChat = async (recipientId) => {
-    if (!recipientId) { setError("Brak ID odbiorcy do rozpoczęcia czatu."); return; }
+  const handleInitiateBookingChat = async (requestId) => {
     try {
-        const { data } = await api.post('/conversations/initiate', { recipientId });
+        const { data } = await api.post('/conversations/initiate/booking', { requestId });
         navigate(`/chat/${data.conversation_id}`);
-    } catch(err) {
-        setError(`Nie można rozpocząć czatu: ${err.response?.data?.message || err.message}`);
+    } catch (err) {
+        setError(`Nie można rozpocząć czatu o rezerwację: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -112,7 +116,7 @@ function DashboardPage() {
   const isRequestCompleted = (req) => {
     const eventDate = req.event_date;
     return new Date(eventDate) < new Date() && req.status === 'confirmed';
-  }
+  };
 
   if (authLoading || loading) return <p style={{textAlign: 'center', marginTop: '50px'}}>Ładowanie panelu...</p>;
   if (!user) return null;
@@ -142,10 +146,10 @@ function DashboardPage() {
       )}
       <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1000px', margin: '0 auto' }}>
         {error && <p style={{ color: 'red', border: '1px solid red', padding: '10px' }}>Błąd: {error}</p>}
+        
         {user.user_type === 'food_truck_owner' && (
           <section>
             <h2>Mój Profil Food Trucka</h2>
-            {/* ZMIANA: Ulepszony widok profilu ze zdjęciem */}
             {profile ? (
               <div style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '5px', display: 'flex', gap: '20px', alignItems: 'center' }}>
                 <img 
@@ -167,12 +171,31 @@ function DashboardPage() {
             )}
           </section>
         )}
+        
+        <section style={{ marginTop: '40px' }}>
+            <h2>Moje Rozmowy</h2>
+            {conversations.length > 0 ? (
+                <ul style={{ listStyle: 'none', padding: 0 }}>
+                    {conversations.map(conv => (
+                        <li key={conv.conversation_id} style={{ borderBottom: '1px solid #eee', padding: '10px 0' }}>
+                            <Link to={`/chat/${conv.conversation_id}`}>
+                                Rozmowa: <strong>{conv.title}</strong>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p>Brak rozpoczętych rozmów.</p>
+            )}
+        </section>
+
         <section style={{ marginTop: '40px' }}>
           <h2>{user.user_type === 'food_truck_owner' ? 'Otrzymane Rezerwacje' : 'Moje Rezerwacje'}</h2>
           {Array.isArray(requests) && requests.length > 0 ? (
             <ul style={{ listStyle: 'none', padding: 0 }}>
               {requests.map(req => (
                 <li key={req.request_id} style={{ border: '1px solid #ccc', padding: '15px', marginBottom: '10px', borderRadius: '5px' }}>
+                  
                   {user.user_type === 'food_truck_owner' ? (
                     <div>
                       <p><strong>Organizator:</strong> {req.organizer_first_name} {req.organizer_last_name} ({req.organizer_email})</p>
@@ -182,6 +205,7 @@ function DashboardPage() {
                     <p><strong>Food Truck:</strong> {req.food_truck_name}</p>
                   )}
                   <hr style={{margin: '10px 0'}} />
+                  
                   <div style={{background: '#f9f9f9', padding: '10px', marginTop: '10px', borderRadius: '5px'}}>
                       <h4 style={{marginTop: 0}}>Szczegóły wydarzenia</h4>
                       <p><strong>Data:</strong> {new Date(req.event_date).toLocaleDateString()}</p>
@@ -191,8 +215,10 @@ function DashboardPage() {
                       <p><strong>Liczba gości:</strong> {req.guest_count}</p>
                       <p><strong>Opis:</strong> {req.event_description}</p>
                   </div>
+                  
                   <p style={{marginTop: '15px'}}><strong>Status rezerwacji:</strong> {req.status}</p>
-                  <div style={{ marginTop: '15px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  
+                  <div style={{ marginTop: '15px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     {user.user_type === 'food_truck_owner' && req.status === 'pending_owner_approval' && (
                       <>
                         <button onClick={() => handleUpdateStatus(req.request_id, 'confirmed')} style={{backgroundColor: 'green', color: 'white'}}>Akceptuj</button>
@@ -202,13 +228,11 @@ function DashboardPage() {
                     {user.user_type === 'food_truck_owner' && req.status === 'confirmed' && (
                         <p style={{color: 'blue', fontWeight: 'bold'}}>Zaakceptowano!</p>
                     )}
-                    {user.user_type === 'food_truck_owner' ? (
-                      <button onClick={() => handleInitiateChat(req.organizer_id)}>Skontaktuj się z organizatorem</button>
-                    ) : (
-                      <button onClick={() => handleInitiateChat(req.owner_id)}>Skontaktuj się z właścicielem</button>
-                    )}
+                    
+                    <button onClick={() => handleInitiateBookingChat(req.request_id)}>Rozmawiaj o tej rezerwacji</button>
+
                     {user.user_type === 'organizer' && isRequestCompleted(req) && (
-                        <button onClick={() => openReviewModal(req.request_id)} style={{backgroundColor: '#007bff', color: 'white'}}>Wystaw opinię</button>
+                        <button onClick={() => openReviewModal(req.request_id)}>Wystaw opinię</button>
                     )}
                   </div>
                 </li>
