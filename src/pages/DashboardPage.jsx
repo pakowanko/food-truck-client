@@ -213,6 +213,7 @@ function DashboardPage() {
                       <p><strong>Lokalizacja:</strong> {req.event_location}</p>
                       <p><strong>Typ wydarzenia:</strong> {req.event_type}</p>
                       <p><strong>Liczba gości:</strong> {req.guest_count}</p>
+                      <p><strong>Koszty mediów (propozycja):</strong> {req.utility_costs} zł</p>
                       <p><strong>Opis:</strong> {req.event_description}</p>
                   </div>
                   
