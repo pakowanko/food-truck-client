@@ -1,11 +1,14 @@
 // src/apiConfig.js
+
 import axios from 'axios';
 
-// TO JEST TO MIEJSCE:
+// Adres URL do backendu jest poprawny
 const DIRECT_URL = 'https://food-truck-backend-1035693089076.europe-west1.run.app';
 
 export const api = axios.create({
-  baseURL: '/api'
+  // TUTAJ JEST JEDYNA POTRZEBNA ZMIANA:
+  // Ustawiamy baseURL na pełny adres URL do Twojego API
+  baseURL: `${DIRECT_URL}/api`
 });
 
 export const SOCKET_URL = DIRECT_URL;
