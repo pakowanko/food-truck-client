@@ -10,7 +10,7 @@
       {
         "source": "/api/**",
         "run": {
-          "serviceId": "food-truck-backend",
+          "serviceId": "food-truck-api",
           "region": "europe-west1"
         }
       },
