@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 // Adres URL do backendu jest poprawny
-const DIRECT_URL = 'https://food-truck-backend-1035693089076.europe-west1.run.app';
+const DIRECT_URL = 'https://food-truck-api-1035693089076.europe-west1.run.app';
 
 export const api = axios.create({
   // TUTAJ JEST JEDYNA POTRZEBNA ZMIANA:
