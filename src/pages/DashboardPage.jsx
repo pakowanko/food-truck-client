@@ -33,35 +33,36 @@ function DashboardPage() {
   const [currentRequestId, setCurrentRequestId] = useState(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+
+  // Ta funkcja zostaje bez zmian
+  const fetchData = async () => {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const [requestsRes, profileRes, conversationsRes] = await Promise.all([
+          api.get('/requests/my-bookings'),
+          user?.user_type === 'food_truck_owner' ? api.get('/profiles/my-profile') : Promise.resolve(null),
+          api.get('/conversations')
+      ]);
+      
+      setRequests(Array.isArray(requestsRes.data) ? requestsRes.data : []);
+      if (profileRes) setProfile(profileRes.data);
+      setConversations(Array.isArray(conversationsRes.data) ? conversationsRes.data : []);
+
+    } catch (err) {
+      if (err.response?.status !== 404) {
+          setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
+          console.error("Błąd pobierania danych w panelu:", err);
+      } else {
+          setProfile(null);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
   
   useEffect(() => {
-    const fetchData = async () => {
-      if (!token) return;
-      setLoading(true);
-      setError('');
-      try {
-        const [requestsRes, profileRes, conversationsRes] = await Promise.all([
-            api.get('/requests/my-bookings'),
-            user?.user_type === 'food_truck_owner' ? api.get('/profiles/my-profile') : Promise.resolve(null),
-            api.get('/conversations')
-        ]);
-        
-        setRequests(Array.isArray(requestsRes.data) ? requestsRes.data : []);
-        if (profileRes) setProfile(profileRes.data);
-        setConversations(Array.isArray(conversationsRes.data) ? conversationsRes.data : []);
-
-      } catch (err) {
-        if (err.response?.status !== 404) {
-            setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
-            console.error("Błąd pobierania danych w panelu:", err);
-        } else {
-            setProfile(null);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (!authLoading && user) {
       fetchData();
     } else if (!authLoading && !user) {
@@ -69,11 +70,12 @@ function DashboardPage() {
     }
   }, [authLoading, user, token, navigate]);
 
+  // JEDYNA ZMIANA JEST TUTAJ
   const handleUpdateStatus = async (requestId, newStatus) => {
     setError('');
     try {
         await api.put(`/requests/${requestId}/status`, { status: newStatus });
-        fetchData(); 
+        await fetchData(); // ZMIANA: Dodajemy 'await', aby poczekać na odświeżenie danych
     } catch (err) {
         setError(err.response?.data?.message || 'Nie udało się zmienić statusu rezerwacji.');
     }
@@ -107,7 +109,7 @@ function DashboardPage() {
         setIsReviewModalOpen(false);
         setRating(0); 
         setComment('');
-        fetchData();
+        await fetchData(); // Tutaj też warto dodać 'await' dla spójności
     } catch (err) {
         setError(err.response?.data?.message || 'Nie udało się dodać opinii.');
     }
