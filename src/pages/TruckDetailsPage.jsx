@@ -64,7 +64,6 @@ function TruckDetailsPage() {
   return (
     <div style={{ maxWidth: '900px', margin: '20px auto', padding: '20px' }}>
       
-      {/* SEKCJA 1: Nagłówek i podstawowe informacje */}
       <h1>{profile.food_truck_name}</h1>
       <p>{profile.food_truck_description}</p>
       <p style={{ color: '#6c757d' }}>
@@ -72,11 +71,11 @@ function TruckDetailsPage() {
       </p>
       {profile.website_url && <p><strong>Strona WWW:</strong> <a href={profile.website_url} target="_blank" rel="noopener noreferrer">{profile.website_url}</a></p>}
 
-      {/* SEKCJA 2: Opinie i gwiazdki */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '20px 0', paddingBottom: '20px', borderBottom: '1px solid #eee' }}>
         <StarRatingDisplay rating={averageRating} />
         <span>({averageRating.toFixed(2)} / 5 na podstawie {reviews.length} opinii)</span>
       </div>
+
       {reviews.length > 0 ? (
           <section>
             {reviews.map(review => (
@@ -89,7 +88,6 @@ function TruckDetailsPage() {
           </section>
       ) : <p>Ten food truck nie ma jeszcze żadnych opinii.</p>}
 
-      {/* SEKCJA 3: Przycisk rezerwacji */}
       {user && user.user_type === 'organizer' && (
         <div style={{margin: '30px 0'}}>
             <Link to={`/booking/${profile.profile_id}`} style={styles.bookButton}>
@@ -98,7 +96,6 @@ function TruckDetailsPage() {
         </div>
       )}
 
-      {/* SEKCJA 4: Oferta */}
       {profile.offer && (
         <section style={styles.section}>
           <h3>Oferta</h3>
@@ -129,7 +126,6 @@ function TruckDetailsPage() {
         </section>
       )}
 
-      {/* SEKCJA 5: Galeria */}
       <section style={styles.section}>
         <h2>Galeria Food Trucka</h2>
         {profile.gallery_photo_urls && profile.gallery_photo_urls.length > 0 ? (

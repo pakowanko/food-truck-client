@@ -1,4 +1,3 @@
-// src/pages/CreateProfilePage.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../AuthContext.jsx';
@@ -23,7 +22,6 @@ function CreateProfilePage() {
   const [website, setWebsite] = useState('');
   const [offer, setOffer] = useState({ dishes: [], drinks: [], dietary: [] });
   const [photos, setPhotos] = useState(null);
-  // ZMIANA: Usunęliśmy 'experience' i 'certifications', dodajemy 'longTermRental'
   const [longTermRental, setLongTermRental] = useState(false);
 
   const [message, setMessage] = useState('');
@@ -35,7 +33,6 @@ function CreateProfilePage() {
         setFoodTruckName(user?.company_name || '');
         return;
       }
-      
       setLoading(true);
       try {
         const { data } = await api.get(`/profiles/${profileId}`);
@@ -45,7 +42,6 @@ function CreateProfilePage() {
         setOperationRadius(data.operation_radius_km || '');
         setWebsite(data.website_url || '');
         setOffer(data.offer || { dishes: [], drinks: [], dietary: [] });
-        // ZMIANA: Wczytujemy nową opcję
         setLongTermRental(data.long_term_rental_available || false);
       } catch (error) {
         setMessage(error.response?.data?.message || "Nie udało się pobrać danych profilu do edycji.");
@@ -81,7 +77,6 @@ function CreateProfilePage() {
     formData.append('operation_radius_km', operationRadius);
     formData.append('website_url', website);
     formData.append('offer', JSON.stringify(offer));
-    // ZMIANA: Dodajemy nową daną do wysyłki
     formData.append('long_term_rental_available', longTermRental);
 
     if (photos) {
@@ -133,7 +128,7 @@ function CreateProfilePage() {
 
         <fieldset style={styles.fieldset}>
           <legend>Obszar działania</legend>
-          <input value={baseLocation} onChange={(e) => setBaseLocation(e.target.value)} placeholder="Kod pocztowy lub Miasto" required style={styles.input} />
+          <input value={baseLocation} onChange={(e) => setBaseLocation(e.target.value)} placeholder="Główna lokalizacja (np. Warszawa)" required style={styles.input} />
           <input type="number" value={operationRadius} onChange={(e) => setOperationRadius(e.target.value)} placeholder="Promień działania w km (np. 100)" required style={{...styles.input, marginTop: '10px'}} />
         </fieldset>
 
@@ -159,7 +154,6 @@ function CreateProfilePage() {
             </div>
         </fieldset>
 
-        {/* ZMIANA: Usunięto starą sekcję i dodano nową */}
         <fieldset style={styles.fieldset}>
             <legend>Opcje dodatkowe</legend>
             <label>
