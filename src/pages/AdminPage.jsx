@@ -1,8 +1,8 @@
-// pages/AdminPage.jsx
 import React, { useState, useEffect } from 'react';
 import { api } from '../apiConfig.js';
 
 function AdminPage() {
+    const [stats, setStats] = useState(null);
     const [users, setUsers] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -11,12 +11,14 @@ function AdminPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [usersRes, bookingsRes] = await Promise.all([
+            const [usersRes, bookingsRes, statsRes] = await Promise.all([
                 api.get('/admin/users'),
-                api.get('/admin/bookings')
+                api.get('/admin/bookings'),
+                api.get('/admin/stats')
             ]);
             setUsers(usersRes.data);
             setBookings(bookingsRes.data);
+            setStats(statsRes.data);
         } catch (err) {
             setError('Nie udało się pobrać danych.');
         } finally {
@@ -54,6 +56,17 @@ function AdminPage() {
             alert('Nie udało się zaktualizować statusu prowizji.');
         }
     };
+    
+    const statCardStyle = {
+        flex: 1,
+        padding: '20px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '8px',
+        textAlign: 'center',
+        minWidth: '200px'
+    };
+    const statValueStyle = { fontSize: '2rem', fontWeight: 'bold' };
+    const statLabelStyle = { fontSize: '1rem', color: '#6c757d' };
 
     if (loading) return <p>Ładowanie panelu admina...</p>;
     if (error) return <p style={{color: 'red'}}>{error}</p>;
@@ -61,6 +74,27 @@ function AdminPage() {
     return (
         <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
             <h1>Panel Administratora</h1>
+            
+            {stats && (
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '40px' }}>
+                    <div style={statCardStyle}>
+                        <div style={statValueStyle}>{stats.users}</div>
+                        <div style={statLabelStyle}>Zarejestrowanych użytkowników</div>
+                    </div>
+                    <div style={statCardStyle}>
+                        <div style={statValueStyle}>{stats.profiles}</div>
+                        <div style={statLabelStyle}>Profili food trucków</div>
+                    </div>
+                    <div style={statCardStyle}>
+                        <div style={statValueStyle}>{stats.bookings}</div>
+                        <div style={statLabelStyle}>Wszystkich rezerwacji</div>
+                    </div>
+                    <div style={statCardStyle}>
+                        <div style={statValueStyle}>{stats.commission} zł</div>
+                        <div style={statLabelStyle}>Suma opłaconych prowizji</div>
+                    </div>
+                </div>
+            )}
             
             <h2 style={{marginTop: '40px'}}>Użytkownicy</h2>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
