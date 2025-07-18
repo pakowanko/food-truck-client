@@ -1,4 +1,4 @@
-import React, [ useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext.jsx';
 import { api } from '../apiConfig.js';
@@ -13,7 +13,6 @@ const StarRating = ({ rating, setRating }) => {
     );
 };
 
-// Nowy komponent dla modala przypomnienia
 const ReminderModal = ({ onClose }) => (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
         <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '450px', textAlign: 'center' }}>
@@ -41,7 +40,7 @@ function DashboardPage() {
   const [error, setError] = useState('');
   
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false); // Nowy stan dla modala
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [currentRequestId, setCurrentRequestId] = useState(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -79,7 +78,6 @@ function DashboardPage() {
     try {
         await api.put(`/requests/${requestId}/status`, { status: newStatus });
 
-        // Logika sprawdzania daty i otwierania modala
         if (newStatus === 'confirmed') {
             const confirmedRequest = requests.find(req => req.request_id === requestId);
             if (confirmedRequest) {
