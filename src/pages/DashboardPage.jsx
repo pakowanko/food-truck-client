@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, [ useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext.jsx';
 import { api } from '../apiConfig.js';
@@ -7,17 +7,28 @@ const StarRating = ({ rating, setRating }) => {
     return (
         <div>
             {[1, 2, 3, 4, 5].map((star) => (
-                <span
-                    key={star}
-                    style={{ cursor: 'pointer', color: star <= rating ? 'gold' : 'grey', fontSize: '2rem' }}
-                    onClick={() => setRating(star)}
-                >
-                    ★
-                </span>
+                <span key={star} style={{ cursor: 'pointer', color: star <= rating ? 'gold' : 'grey', fontSize: '2rem' }} onClick={() => setRating(star)}>★</span>
             ))}
         </div>
     );
 };
+
+// Nowy komponent dla modala przypomnienia
+const ReminderModal = ({ onClose }) => (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+        <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '450px', textAlign: 'center' }}>
+            <h2 style={{ marginTop: 0 }}>Rezerwacja Potwierdzona!</h2>
+            <p>Pamiętaj o obowiązku zakupu opakowań na to wydarzenie w naszym sklepie.</p>
+            <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                <button onClick={onClose} style={{ padding: '10px 20px' }}>Zamknij</button>
+                <a href="https://www.pakowanko.com" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', padding: '10px 20px', backgroundColor: 'var(--primary-red)', color: 'white', borderRadius: '5px' }}>
+                    Przejdź do sklepu
+                </a>
+            </div>
+        </div>
+    </div>
+);
+
 
 function DashboardPage() {
   const { user, token, loading: authLoading } = useContext(AuthContext);
@@ -30,13 +41,13 @@ function DashboardPage() {
   const [error, setError] = useState('');
   
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false); // Nowy stan dla modala
   const [currentRequestId, setCurrentRequestId] = useState(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
 
   const fetchData = async () => {
     if (!token) return;
-    // Nie ustawiamy setLoading(true) tutaj, aby uniknąć migotania całej strony przy odświeżaniu
     setError('');
     try {
       const [requestsRes, profilesRes, conversationsRes] = await Promise.all([
@@ -44,22 +55,19 @@ function DashboardPage() {
           user?.user_type === 'food_truck_owner' ? api.get('/profiles/my-profiles') : Promise.resolve({ data: [] }),
           api.get('/conversations')
       ]);
-      
       setRequests(Array.isArray(requestsRes.data) ? requestsRes.data : []);
       setProfiles(Array.isArray(profilesRes.data) ? profilesRes.data : []);
       setConversations(Array.isArray(conversationsRes.data) ? conversationsRes.data : []);
-
     } catch (err) {
       setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
-      console.error("Błąd pobierania danych w panelu:", err);
     } finally {
-      setLoading(false); // Loading kończy się tutaj, po pobraniu wszystkich danych
+      setLoading(false);
     }
   };
   
   useEffect(() => {
     if (!authLoading && user) {
-      setLoading(true); // Ustawiamy loading na true przy pierwszym ładowaniu
+      setLoading(true);
       fetchData();
     } else if (!authLoading && !user) {
       navigate('/login');
@@ -70,12 +78,26 @@ function DashboardPage() {
     setError('');
     try {
         await api.put(`/requests/${requestId}/status`, { status: newStatus });
+
+        // Logika sprawdzania daty i otwierania modala
+        if (newStatus === 'confirmed') {
+            const confirmedRequest = requests.find(req => req.request_id === requestId);
+            if (confirmedRequest) {
+                const today = new Date();
+                const eventDate = new Date(confirmedRequest.event_date);
+                const daysUntilEvent = (eventDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
+
+                if (daysUntilEvent <= 7) {
+                    setIsReminderModalOpen(true);
+                }
+            }
+        }
         await fetchData(); 
     } catch (err) {
         setError(err.response?.data?.message || 'Nie udało się zmienić statusu rezerwacji.');
     }
   };
-
+  
   const handleInitiateBookingChat = async (requestId) => {
     try {
         const { data } = await api.post('/conversations/initiate/booking', { requestId });
@@ -141,6 +163,8 @@ function DashboardPage() {
           </div>
         </div>
       )}
+      {isReminderModalOpen && <ReminderModal onClose={() => setIsReminderModalOpen(false)} />}
+
       <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1000px', margin: '0 auto' }}>
         {error && <p style={{ color: 'red', border: '1px solid red', padding: '10px' }}>Błąd: {error}</p>}
         
@@ -212,7 +236,7 @@ function DashboardPage() {
                   
                   <div style={{background: '#f9f9f9', padding: '10px', marginTop: '10px', borderRadius: '5px'}}>
                       <h4 style={{marginTop: 0}}>Szczegóły wydarzenia</h4>
-                      <p><strong>Data:</strong> {new Date(req.event_date).toLocaleString()}</p>
+                      <p><strong>Data:</strong> {new Date(req.event_date).toLocaleDateString()}</p>
                       <p><strong>Godziny:</strong> {req.event_time}</p>
                       <p><strong>Lokalizacja:</strong> {req.event_location}</p>
                       <p><strong>Typ wydarzenia:</strong> {req.event_type}</p>
