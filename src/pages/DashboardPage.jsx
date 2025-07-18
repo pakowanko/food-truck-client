@@ -24,7 +24,7 @@ function DashboardPage() {
   const navigate = useNavigate();
 
   const [requests, setRequests] = useState([]);
-  const [profile, setProfile] = useState(null);
+  const [profiles, setProfiles] = useState([]); 
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,48 +34,43 @@ function DashboardPage() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
 
-  // Ta funkcja zostaje bez zmian
   const fetchData = async () => {
     if (!token) return;
-    setLoading(true);
+    // Nie ustawiamy setLoading(true) tutaj, aby uniknąć migotania całej strony przy odświeżaniu
     setError('');
     try {
-      const [requestsRes, profileRes, conversationsRes] = await Promise.all([
+      const [requestsRes, profilesRes, conversationsRes] = await Promise.all([
           api.get('/requests/my-bookings'),
-          user?.user_type === 'food_truck_owner' ? api.get('/profiles/my-profile') : Promise.resolve(null),
+          user?.user_type === 'food_truck_owner' ? api.get('/profiles/my-profiles') : Promise.resolve({ data: [] }),
           api.get('/conversations')
       ]);
       
       setRequests(Array.isArray(requestsRes.data) ? requestsRes.data : []);
-      if (profileRes) setProfile(profileRes.data);
+      setProfiles(Array.isArray(profilesRes.data) ? profilesRes.data : []);
       setConversations(Array.isArray(conversationsRes.data) ? conversationsRes.data : []);
 
     } catch (err) {
-      if (err.response?.status !== 404) {
-          setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
-          console.error("Błąd pobierania danych w panelu:", err);
-      } else {
-          setProfile(null);
-      }
+      setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
+      console.error("Błąd pobierania danych w panelu:", err);
     } finally {
-      setLoading(false);
+      setLoading(false); // Loading kończy się tutaj, po pobraniu wszystkich danych
     }
   };
   
   useEffect(() => {
     if (!authLoading && user) {
+      setLoading(true); // Ustawiamy loading na true przy pierwszym ładowaniu
       fetchData();
     } else if (!authLoading && !user) {
       navigate('/login');
     }
   }, [authLoading, user, token, navigate]);
 
-  // JEDYNA ZMIANA JEST TUTAJ
   const handleUpdateStatus = async (requestId, newStatus) => {
     setError('');
     try {
         await api.put(`/requests/${requestId}/status`, { status: newStatus });
-        await fetchData(); // ZMIANA: Dodajemy 'await', aby poczekać na odświeżenie danych
+        await fetchData(); 
     } catch (err) {
         setError(err.response?.data?.message || 'Nie udało się zmienić statusu rezerwacji.');
     }
@@ -109,7 +104,7 @@ function DashboardPage() {
         setIsReviewModalOpen(false);
         setRating(0); 
         setComment('');
-        await fetchData(); // Tutaj też warto dodać 'await' dla spójności
+        await fetchData();
     } catch (err) {
         setError(err.response?.data?.message || 'Nie udało się dodać opinii.');
     }
@@ -151,24 +146,31 @@ function DashboardPage() {
         
         {user.user_type === 'food_truck_owner' && (
           <section>
-            <h2>Mój Profil Food Trucka</h2>
-            {profile ? (
-              <div style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '5px', display: 'flex', gap: '20px', alignItems: 'center' }}>
-                <img 
-                  src={profile.profile_image_url || 'https://placehold.co/100x100/F0AD4E/343A40?text=Brak+zdjęcia'} 
-                  alt={profile.food_truck_name}
-                  style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
-                />
-                <div>
-                  <h3>{profile.food_truck_name}</h3>
-                  <p style={{margin: '5px 0'}}>{profile.food_truck_description}</p>
-                  <Link to={`/edit-profile/${profile.profile_id}`}>Edytuj profil</Link>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h2>Moje Profile Food Trucków</h2>
+              <Link to="/create-profile" style={{ textDecoration: 'none', padding: '10px 15px', backgroundColor: 'var(--primary-red)', color: 'white', borderRadius: '5px' }}>
+                + Dodaj nowy profil
+              </Link>
+            </div>
+
+            {profiles.length > 0 ? (
+              profiles.map(profile => (
+                <div key={profile.profile_id} style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '5px', display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '10px' }}>
+                  <img 
+                    src={profile.profile_image_url || 'https://placehold.co/100x100/F0AD4E/343A40?text=Brak+zdjęcia'} 
+                    alt={profile.food_truck_name}
+                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                  />
+                  <div>
+                    <h3>{profile.food_truck_name}</h3>
+                    <p style={{margin: '5px 0'}}>{profile.food_truck_description}</p>
+                    <Link to={`/edit-profile/${profile.profile_id}`}>Edytuj profil</Link>
+                  </div>
                 </div>
-              </div>
+              ))
             ) : (
               <div>
-                <p>Nie uzupełniłeś jeszcze swojego profilu food trucka.</p>
-                <Link to="/create-profile">Uzupełnij profil teraz</Link>
+                <p>Nie dodałeś jeszcze żadnego profilu food trucka.</p>
               </div>
             )}
           </section>
@@ -210,7 +212,7 @@ function DashboardPage() {
                   
                   <div style={{background: '#f9f9f9', padding: '10px', marginTop: '10px', borderRadius: '5px'}}>
                       <h4 style={{marginTop: 0}}>Szczegóły wydarzenia</h4>
-                      <p><strong>Data:</strong> {new Date(req.event_date).toLocaleDateString()}</p>
+                      <p><strong>Data:</strong> {new Date(req.event_date).toLocaleString()}</p>
                       <p><strong>Godziny:</strong> {req.event_time}</p>
                       <p><strong>Lokalizacja:</strong> {req.event_location}</p>
                       <p><strong>Typ wydarzenia:</strong> {req.event_type}</p>
