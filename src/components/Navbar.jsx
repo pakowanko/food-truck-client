@@ -1,7 +1,6 @@
 // src/components/Navbar.jsx
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// ZMIANA: Poprawiona ścieżka do AuthContext.jsx
 import { AuthContext } from '../AuthContext.jsx';
 
 const styles = {
@@ -12,12 +11,12 @@ const styles = {
     padding: '1rem 2rem',
     backgroundColor: 'var(--white)',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    borderBottom: `3px solid var(--accent-yellow)` // Używamy nowej zmiennej kolorystycznej
+    borderBottom: `3px solid var(--accent-yellow)`
   },
   logo: {
     fontWeight: 'bold',
     fontSize: '1.5rem',
-    color: 'var(--dark-text)', // Używamy głównego koloru tekstu
+    color: 'var(--dark-text)',
   },
   navLinks: {
     display: 'flex',
@@ -30,7 +29,7 @@ const styles = {
   },
   logoutButton: {
     backgroundColor: 'transparent',
-    color: 'var(--primary-red)', // Używamy nowego koloru akcji
+    color: 'var(--primary-red)',
     border: '1px solid var(--primary-red)',
   }
 };
@@ -49,6 +48,15 @@ function Navbar() {
     food_truck_owner: 'Właściciel'
   };
 
+  // Funkcja pomocnicza do wyświetlania poprawnej roli
+  const getUserDisplayRole = () => {
+    if (!user) return '';
+    if (user.role === 'admin') {
+      return 'Administrator';
+    }
+    return roleDisplayMap[user.user_type] || user.user_type;
+  };
+
   return (
     <nav style={styles.nav}>
       <Link to="/" style={styles.logo}>
@@ -58,8 +66,11 @@ function Navbar() {
         {user ? (
           <>
             <span style={styles.userInfo}>
-              Witaj, {user.email} (Rola: {roleDisplayMap[user.user_type] || user.user_type})
+              {/* ---- ZMIANA JEST TUTAJ ---- */}
+              Witaj, {user.email} (Rola: {getUserDisplayRole()})
             </span>
+            {/* Dodajemy link do panelu admina, jeśli użytkownik jest adminem */}
+            {user.role === 'admin' && <Link to="/admin">Panel Admina</Link>}
             <Link to="/dashboard">Mój Panel</Link>
             <button onClick={handleLogout} style={styles.logoutButton}>Wyloguj</button>
           </>
