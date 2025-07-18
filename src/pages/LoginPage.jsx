@@ -1,7 +1,5 @@
-// src/pages/LoginPage.jsx
 import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-// ZMIANA: Ostateczna poprawka obu ścieżek
 import { AuthContext } from '../AuthContext.jsx'; 
 import { api } from '../apiConfig.js'; 
 
@@ -15,49 +13,35 @@ function LoginPage() {
   const location = useLocation();
   const { login } = useContext(AuthContext);
 
-  const from = location.state?.from?.pathname || "/dashboard";
-
   const handleLogin = async (event) => {
     event.preventDefault();
-    console.log('Krok 1: Funkcja handleLogin została uruchomiona.');
-
     setLoading(true);
     setMessage('');
 
     try {
       const loginPayload = { email, password };
-      console.log('Krok 2: Przygotowano dane do wysyłki:', loginPayload);
-      
-      const url = `${api.defaults.baseURL}/auth/login`; 
-      console.log('Krok 3: Próba wysłania zapytania na URL:', url);
-
       const response = await api.post('/auth/login', loginPayload);
+      const data = response.data; // Odpowiedź z serwera, zawiera teraz pole 'role'
+
+      // ---- POCZĄTEK ZMIAN ----
+
+      // 1. Zapisujemy w kontekście PEŁNE dane użytkownika (wraz z rolą)
+      login(data, data.token);
       
-      console.log('Krok 4: Otrzymano odpowiedź od serwera.', response);
-
-      const data = response.data;
-      console.log('Krok 5: Sparsowano dane JSON.', data);
-
-      if (response.status >= 200 && response.status < 300) {
-        console.log('Krok 6: Odpowiedź jest OK. Logowanie...');
-        login({
-            userId: data.userId,
-            email: data.email,
-            user_type: data.user_type
-        }, data.token);
-        
-        navigate(from, { replace: true });
+      // 2. Sprawdzamy rolę i decydujemy, gdzie przekierować
+      if (data.role === 'admin') {
+        navigate('/admin', { replace: true });
       } else {
-        console.error('Krok 6b: Odpowiedź z błędem.', data);
-        setLoading(false);
-        setMessage(data.message || 'Wystąpił nieznany błąd.');
+        // Dla zwykłych użytkowników zachowujemy poprzednią logikę
+        const from = location.state?.from?.pathname || "/dashboard";
+        navigate(from, { replace: true });
       }
+      
+      // ---- KONIEC ZMIAN ----
+
     } catch (error) {
-      console.error('Krok X: Wystąpił krytyczny błąd w bloku CATCH!', error);
       setLoading(false);
       setMessage(error.response?.data?.message || 'Błąd sieci lub serwera.');
-    } finally {
-      console.log('Krok 7: Wykonano blok finally.');
     }
   };
 
@@ -65,9 +49,9 @@ function LoginPage() {
     <div style={{ maxWidth: '450px', margin: '50px auto', padding: '30px', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
       <h2 style={{ textAlign: 'center' }}>Zaloguj się</h2>
       <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required style={{padding: '10px'}} />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Hasło" required style={{padding: '10px'}} />
-        <button type="submit" disabled={loading}>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required style={{padding: '12px', fontSize: '1rem'}} />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Hasło" required style={{padding: '12px', fontSize: '1rem'}} />
+        <button type="submit" disabled={loading} style={{padding: '12px', fontSize: '1rem', cursor: 'pointer'}}>
           {loading ? 'Logowanie...' : 'Zaloguj się'}
         </button>
       </form>

@@ -9,6 +9,7 @@ function AdminPage() {
     const [error, setError] = useState('');
 
     const fetchData = async () => {
+        setLoading(true);
         try {
             const [usersRes, bookingsRes] = await Promise.all([
                 api.get('/admin/users'),
@@ -30,7 +31,7 @@ function AdminPage() {
     const handleToggleBlock = async (userId) => {
         try {
             await api.put(`/admin/users/${userId}/toggle-block`);
-            fetchData(); // Odśwież dane po zmianie
+            fetchData();
         } catch (err) {
             alert('Nie udało się zaktualizować użytkownika.');
         }
@@ -39,9 +40,18 @@ function AdminPage() {
     const handlePackagingStatusChange = async (requestId, currentStatus) => {
         try {
             await api.put(`/admin/bookings/${requestId}/packaging-status`, { packaging_ordered: !currentStatus });
-            fetchData(); // Odśwież dane po zmianie
+            fetchData();
         } catch (err) {
-            alert('Nie udało się zaktualizować rezerwacji.');
+            alert('Nie udało się zaktualizować statusu opakowań.');
+        }
+    };
+
+    const handleCommissionStatusChange = async (requestId, currentStatus) => {
+        try {
+            await api.put(`/admin/bookings/${requestId}/commission-status`, { commission_paid: !currentStatus });
+            fetchData();
+        } catch (err) {
+            alert('Nie udało się zaktualizować statusu prowizji.');
         }
     };
 
@@ -88,9 +98,9 @@ function AdminPage() {
                      <tr style={{ borderBottom: '2px solid black' }}>
                         <th style={{ textAlign: 'left', padding: '8px' }}>ID</th>
                         <th style={{ textAlign: 'left', padding: '8px' }}>Food Truck</th>
-                        <th style={{ textAlign: 'left', padding: '8px' }}>Organizator</th>
                         <th style={{ textAlign: 'left', padding: '8px' }}>Data eventu</th>
-                        <th style={{ textAlign: 'left', padding: '8px' }}>Status opakowań</th>
+                        <th style={{ textAlign: 'left', padding: '8px' }}>Status Prowizji</th>
+                        <th style={{ textAlign: 'left', padding: '8px' }}>Status Opakowań</th>
                         <th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
                     </tr>
                 </thead>
@@ -99,14 +109,19 @@ function AdminPage() {
                         <tr key={booking.request_id} style={{ borderBottom: '1px solid #ccc' }}>
                             <td style={{ padding: '8px' }}>{booking.request_id}</td>
                             <td style={{ padding: '8px' }}>{booking.company_name}</td>
-                            <td style={{ padding: '8px' }}>{booking.organizer_email}</td>
                             <td style={{ padding: '8px' }}>{new Date(booking.event_date).toLocaleDateString()}</td>
-                            <td style={{ padding: '8px', color: booking.packaging_ordered ? 'green' : 'red' }}>
+                            <td style={{ padding: '8px', color: booking.commission_paid ? 'green' : 'red', fontWeight: 'bold' }}>
+                                {booking.commission_paid ? 'Opłacona' : 'Nieopłacona'}
+                            </td>
+                            <td style={{ padding: '8px', color: booking.packaging_ordered ? 'green' : 'orange', fontWeight: 'bold' }}>
                                 {booking.packaging_ordered ? 'Zamówione' : 'Brak zamówienia'}
                             </td>
-                             <td style={{ padding: '8px' }}>
+                             <td style={{ padding: '8px', display: 'flex', gap: '10px' }}>
+                                <button onClick={() => handleCommissionStatusChange(booking.request_id, booking.commission_paid)}>
+                                    Prowizja
+                                </button>
                                 <button onClick={() => handlePackagingStatusChange(booking.request_id, booking.packaging_ordered)}>
-                                    Zmień status
+                                    Opakowania
                                 </button>
                             </td>
                         </tr>
