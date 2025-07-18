@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext.jsx';
@@ -17,6 +16,7 @@ const styles = {
     fontWeight: 'bold',
     fontSize: '1.5rem',
     color: 'var(--dark-text)',
+    textDecoration: 'none'
   },
   navLinks: {
     display: 'flex',
@@ -24,13 +24,16 @@ const styles = {
     gap: '1.5rem',
   },
   userInfo: {
-    color: 'var(--light-text)',
+    color: '#6c757d',
     fontSize: '0.9rem',
   },
   logoutButton: {
+    padding: '8px 15px',
     backgroundColor: 'transparent',
     color: 'var(--primary-red)',
     border: '1px solid var(--primary-red)',
+    borderRadius: '5px',
+    cursor: 'pointer'
   }
 };
 
@@ -72,6 +75,7 @@ function Navbar() {
             ) : (
               <Link to="/dashboard">Mój Panel</Link>
             )}
+            <Link to="/my-account">Moje Konto</Link>
             <button onClick={handleLogout} style={styles.logoutButton}>Wyloguj</button>
           </>
         ) : (

@@ -6,7 +6,7 @@ import { AuthProvider } from './AuthContext.jsx';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
-import AdminRoute from './components/AdminRoute.jsx'; // <--- BRAKUJĄCY IMPORT
+import AdminRoute from './components/AdminRoute.jsx';
 
 // Import stron
 import HomePage from './pages/HomePage.jsx';
@@ -20,7 +20,8 @@ import TermsPage from './pages/TermsPage.jsx';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
 import ChatLayout from './pages/ChatLayout.jsx';
 import ConversationView from './pages/ConversationView.jsx';
-import AdminPage from './pages/AdminPage.jsx'; // <--- BRAKUJĄCY IMPORT
+import AdminPage from './pages/AdminPage.jsx';
+import MyAccountPage from './pages/MyAccountPage.jsx';
 
 
 function App() {
@@ -43,8 +44,9 @@ function App() {
             <Route path="/create-profile" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
             <Route path="/edit-profile/:profileId" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
             <Route path="/booking/:profileId" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
+            <Route path="/my-account" element={<ProtectedRoute><MyAccountPage /></ProtectedRoute>} />
          
-            {/* DODAJ NOWĄ ŚCIEŻKĘ ADMINA */}
+            {/* Trasa tylko dla admina */}
             <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
             {/* Zagnieżdżona trasa dla czatu */}
