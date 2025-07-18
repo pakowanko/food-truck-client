@@ -6,6 +6,7 @@ import { AuthProvider } from './AuthContext.jsx';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import AdminRoute from './components/AdminRoute.jsx'; // <--- BRAKUJĄCY IMPORT
 
 // Import stron
 import HomePage from './pages/HomePage.jsx';
@@ -19,6 +20,7 @@ import TermsPage from './pages/TermsPage.jsx';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
 import ChatLayout from './pages/ChatLayout.jsx';
 import ConversationView from './pages/ConversationView.jsx';
+import AdminPage from './pages/AdminPage.jsx'; // <--- BRAKUJĄCY IMPORT
 
 
 function App() {
