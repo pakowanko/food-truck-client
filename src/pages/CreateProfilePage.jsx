@@ -15,6 +15,7 @@ function CreateProfilePage() {
   const { user, token } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  // Istniejące stany
   const [foodTruckName, setFoodTruckName] = useState('');
   const [description, setDescription] = useState('');
   const [baseLocation, setBaseLocation] = useState('');
@@ -23,6 +24,12 @@ function CreateProfilePage() {
   const [offer, setOffer] = useState({ dishes: [], drinks: [], dietary: [] });
   const [photos, setPhotos] = useState(null);
   const [longTermRental, setLongTermRental] = useState(false);
+
+  // Nowe stany dla danych firmy
+  const [nip, setNip] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [city, setCity] = useState('');
 
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,6 +50,7 @@ function CreateProfilePage() {
         setWebsite(data.website_url || '');
         setOffer(data.offer || { dishes: [], drinks: [], dietary: [] });
         setLongTermRental(data.long_term_rental_available || false);
+        // Uwaga: Tutaj w przyszłości można też wczytywać zapisane dane firmy (NIP, adres)
       } catch (error) {
         setMessage(error.response?.data?.message || "Nie udało się pobrać danych profilu do edycji.");
       } finally {
@@ -65,6 +73,25 @@ function CreateProfilePage() {
     });
   };
 
+  // Nowa funkcja do pobierania danych z GUS
+  const handleFetchGusData = async () => {
+    if (!nip) {
+        setMessage('Wpisz numer NIP, aby pobrać dane.');
+        return;
+    }
+    setMessage('Pobieranie danych z GUS...');
+    try {
+        const { data } = await api.get(`/gus/company-data/${nip}`);
+        setFoodTruckName(data.company_name); // Uzupełniamy nazwę food trucka nazwą firmy
+        setStreetAddress(data.street_address);
+        setPostalCode(data.postal_code);
+        setCity(data.city);
+        setMessage('Dane pobrane pomyślnie!');
+    } catch (error) {
+        setMessage(error.response?.data?.message || 'Nie udało się pobrać danych z GUS.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -78,6 +105,8 @@ function CreateProfilePage() {
     formData.append('website_url', website);
     formData.append('offer', JSON.stringify(offer));
     formData.append('long_term_rental_available', longTermRental);
+    // Uwaga: W przyszłości tutaj trzeba będzie dodać przesyłanie NIP i adresu,
+    // gdy już zdecydujemy, gdzie te dane mają być zapisane w bazie.
 
     if (photos) {
       for (let i = 0; i < photos.length; i++) {
@@ -120,8 +149,19 @@ function CreateProfilePage() {
       
       <form onSubmit={handleSubmit} style={styles.form}>
         <fieldset style={styles.fieldset}>
-          <legend>Podstawowe informacje</legend>
+          <legend>Podstawowe informacje i dane do faktury</legend>
           <input value={foodTruckName} onChange={(e) => setFoodTruckName(e.target.value)} placeholder="Nazwa Twojego food trucka" required style={styles.input} />
+          
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px' }}>
+            <input value={nip} onChange={(e) => setNip(e.target.value)} placeholder="NIP firmy" style={{ ...styles.input, flex: 1 }} />
+            <button type="button" onClick={handleFetchGusData}>Pobierz dane z GUS</button>
+          </div>
+          <input value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} placeholder="Ulica i numer" style={{...styles.input, marginTop: '10px'}} />
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="Kod pocztowy" style={{...styles.input, flex: 1}} />
+              <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Miasto" style={{...styles.input, flex: 2}} />
+          </div>
+
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Krótki opis, czym się wyróżniacie..." required style={{...styles.input, minHeight: '100px', marginTop: '10px'}} />
           <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Adres strony internetowej (opcjonalnie)" style={{...styles.input, marginTop: '10px'}} />
         </fieldset>
@@ -172,7 +212,7 @@ function CreateProfilePage() {
             <input type="file" multiple accept="image/*" onChange={(e) => setPhotos(e.target.files)} style={styles.input} />
         </fieldset>
 
-        {message && <p style={{ color: message.startsWith('Profil') ? 'green' : 'red', textAlign: 'center' }}>{message}</p>}
+        {message && <p style={{ color: message.startsWith('Profil') || message.startsWith('Dane pobrane') ? 'green' : 'red', textAlign: 'center' }}>{message}</p>}
 
         <button type="submit" disabled={loading} style={{ padding: '15px', fontSize: '16px', fontWeight: 'bold' }}>
           {loading ? 'Zapisywanie...' : (isEditMode ? 'Zapisz zmiany' : 'Utwórz profil')}
