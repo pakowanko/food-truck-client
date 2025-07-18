@@ -20,6 +20,7 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
 import ChatLayout from './pages/ChatLayout.jsx';
 import ConversationView from './pages/ConversationView.jsx';
 
+
 function App() {
   return (
     <AuthProvider>
@@ -40,7 +41,10 @@ function App() {
             <Route path="/create-profile" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
             <Route path="/edit-profile/:profileId" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
             <Route path="/booking/:profileId" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
-            
+         
+            {/* DODAJ NOWĄ ŚCIEŻKĘ ADMINA */}
+            <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+
             {/* Zagnieżdżona trasa dla czatu */}
             <Route path="/chat" element={<ProtectedRoute><ChatLayout /></ProtectedRoute>}>
               <Route path=":conversationId" element={<ConversationView />} />
