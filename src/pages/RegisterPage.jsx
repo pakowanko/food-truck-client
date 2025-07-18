@@ -1,134 +1,154 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../apiConfig.js';
 
 function RegisterPage() {
-  const navigate = useNavigate();
-  
-  const [userType, setUserType] = useState('organizer'); 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [countryCode, setCountryCode] = useState('PL');
-  
-  const [isCompany, setIsCompany] = useState(false);
-  const [companyName, setCompanyName] = useState('');
-  const [nip, setNip] = useState('');
+    const [userType, setUserType] = useState('organizer');
+    const [formData, setFormData] = useState({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone_number: '',
+        country_code: 'PL',
+        password: '',
+        confirmPassword: '',
+        company_name: '',
+        nip: ''
+    });
+    // Nowe stany dla adresu, oddzielone od głównego formularza
+    const [streetAddress, setStreetAddress] = useState('');
+    const [postalCode, setPostalCode] = useState('');
+    const [city, setCity] = useState('');
 
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-  const countries = [
-    { code: 'PL', name: 'Polska' }, { code: 'DE', name: 'Niemcy' },
-    { code: 'CZ', name: 'Czechy' }, { code: 'SK', name: 'Słowacja' },
-  ];
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      setMessage('Hasła nie są takie same.');
-      return;
-    }
-    if (!termsAccepted) {
-        setMessage('Musisz zaakceptować regulamin.');
-        return;
-    }
-    setLoading(true);
-    setMessage('');
-
-    const registrationData = {
-        email, password, user_type: userType,
-        first_name: firstName, last_name: lastName, phone_number: phoneNumber,
-        company_name: isCompany || userType === 'food_truck_owner' ? companyName : null,
-        nip: isCompany || userType === 'food_truck_owner' ? nip : null,
-        country_code: countryCode
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    try {
-        await api.post('/auth/register', registrationData);
-        setMessage('Rejestracja pomyślna! Za chwilę zostaniesz przekierowany do logowania.');
-        setTimeout(() => navigate('/login'), 2000);
-    } catch (error) {
-        setMessage(error.response?.data?.message || error.message || 'Wystąpił nieznany błąd.');
-    } finally {
-        setLoading(false);
-    }
-  };
+    const handleFetchGusData = async () => {
+        if (!formData.nip) {
+            setError('Wpisz numer NIP, aby pobrać dane.');
+            return;
+        }
+        setLoading(true);
+        setError('');
+        setMessage('Pobieranie danych z GUS...');
+        try {
+            const { data } = await api.get(`/gus/company-data/${formData.nip}`);
+            setFormData({ ...formData, company_name: data.company_name });
+            setStreetAddress(data.street_address);
+            setPostalCode(data.postal_code);
+            setCity(data.city);
+            setMessage('Dane pobrane pomyślnie!');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Nie udało się pobrać danych z GUS.');
+            setMessage('');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div style={{ maxWidth: '700px', margin: '20px auto', padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1>Utwórz nowe konto</h1>
-      
-      <div style={{ marginBottom: '20px' }}>
-        <h3>Wybierz typ konta:</h3>
-        <label style={{ marginRight: '20px' }}>
-            <input type="radio" value="organizer" checked={userType === 'organizer'} onChange={(e) => setUserType(e.target.value)} /> Jestem Organizatorem
-        </label>
-        <label>
-            <input type="radio" value="food_truck_owner" checked={userType === 'food_truck_owner'} onChange={(e) => setUserType(e.target.value)} /> Jestem Właścicielem Food Trucka
-        </label>
-      </div>
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setMessage('');
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-            <legend>Dane Podstawowe</legend>
-            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Imię" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
-            <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nazwisko" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adres e-mail" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-            <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Numer telefonu" style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-            <div style={{marginTop: '10px'}}>
-                <label>Kraj rezydencji podatkowej:</label>
-                <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}>
-                    {countries.map(country => (<option key={country.code} value={country.code}>{country.name}</option>))}
-                </select>
-            </div>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Hasło" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Potwierdź hasło" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-        </fieldset>
+        if (formData.password !== formData.confirmPassword) {
+            setError("Hasła nie są takie same.");
+            return;
+        }
 
-        {userType === 'organizer' && (
-            <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                <legend>Dane Firmy (Opcjonalne)</legend>
-                <label><input type="checkbox" checked={isCompany} onChange={(e) => setIsCompany(e.target.checked)} /> Rejestruję się jako firma</label>
-                {isCompany && (
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px'}}>
-                        <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Nazwa firmy" style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
-                        <input value={nip} onChange={(e) => setNip(e.target.value)} placeholder="NIP" style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
-                    </div>
+        setLoading(true);
+
+        const submissionData = {
+            ...formData,
+            user_type: userType,
+            street_address: streetAddress,
+            postal_code: postalCode,
+            city: city
+        };
+
+        try {
+            await api.post('/auth/register', submissionData);
+            setMessage('Rejestracja pomyślna! Za chwilę zostaniesz przekierowany do strony logowania.');
+            setTimeout(() => {
+                navigate('/login');
+            }, 3000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Wystąpił błąd podczas rejestracji.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div style={{ maxWidth: '600px', margin: '20px auto', padding: '20px' }}>
+            <h1>Utwórz nowe konto</h1>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                
+                <fieldset style={{ border: '1px solid #ccc', padding: '15px' }}>
+                    <legend>Wybierz typ konta:</legend>
+                    <label style={{ marginRight: '20px' }}>
+                        <input type="radio" name="userType" value="organizer" checked={userType === 'organizer'} onChange={(e) => setUserType(e.target.value)} />
+                        Jestem Organizatorem
+                    </label>
+                    <label>
+                        <input type="radio" name="userType" value="food_truck_owner" checked={userType === 'food_truck_owner'} onChange={(e) => setUserType(e.target.value)} />
+                        Jestem Właścicielem Food Trucka
+                    </label>
+                </fieldset>
+
+                <fieldset style={{ border: '1px solid #ccc', padding: '15px' }}>
+                    <legend>Dane podstawowe</legend>
+                    <input type="text" name="first_name" placeholder="Imię" value={formData.first_name} onChange={handleChange} required />
+                    <input type="text" name="last_name" placeholder="Nazwisko" value={formData.last_name} onChange={handleChange} required style={{ marginTop: '10px' }}/>
+                    <input type="email" name="email" placeholder="Adres e-mail" value={formData.email} onChange={handleChange} required style={{ marginTop: '10px' }}/>
+                    <input type="tel" name="phone_number" placeholder="Numer telefonu" value={formData.phone_number} onChange={handleChange} required style={{ marginTop: '10px' }}/>
+                    <select name="country_code" value={formData.country_code} onChange={handleChange} style={{ marginTop: '10px' }}>
+                        <option value="PL">Polska</option>
+                    </select>
+                    <input type="password" name="password" placeholder="Hasło" value={formData.password} onChange={handleChange} required style={{ marginTop: '10px' }}/>
+                    <input type="password" name="confirmPassword" placeholder="Potwierdź hasło" value={formData.confirmPassword} onChange={handleChange} required style={{ marginTop: '10px' }}/>
+                </fieldset>
+
+                {userType === 'food_truck_owner' && (
+                    <fieldset style={{ border: '1px solid #ccc', padding: '15px' }}>
+                        <legend>Dane Firmy</legend>
+                        <p style={{fontSize: '0.9em', color: '#666', marginTop: 0}}>Jako właściciel food trucka musisz podać dane swojej działalności.</p>
+                        <input type="text" name="company_name" placeholder="Nazwa firmy / działalności" value={formData.company_name} onChange={handleChange} required={userType === 'food_truck_owner'} />
+                        
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px' }}>
+                            <input type="text" name="nip" placeholder="NIP" value={formData.nip} onChange={handleChange} required={userType === 'food_truck_owner'} style={{flex: 1}}/>
+                            <button type="button" onClick={handleFetchGusData} disabled={loading}>
+                                {loading ? '...' : 'Pobierz dane z GUS'}
+                            </button>
+                        </div>
+                        
+                        <input type="text" placeholder="Ulica i numer" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} required={userType === 'food_truck_owner'} style={{ marginTop: '10px' }}/>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                            <input type="text" placeholder="Kod pocztowy" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} required={userType === 'food_truck_owner'} style={{ flex: 1 }}/>
+                            <input type="text" placeholder="Miasto" value={city} onChange={(e) => setCity(e.target.value)} required={userType === 'food_truck_owner'} style={{ flex: 2 }}/>
+                        </div>
+                    </fieldset>
                 )}
-            </fieldset>
-        )}
 
-        {userType === 'food_truck_owner' && (
-            <fieldset style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                <legend>Dane Firmy</legend>
-                <p>Jako właściciel food trucka musisz podać dane swojej działalności.</p>
-                <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Nazwa firmy / działalności" required style={{width: '100%', padding: '8px', boxSizing: 'border-box'}}/>
-                <input value={nip} onChange={(e) => setNip(e.target.value)} placeholder="NIP" required style={{width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '10px'}}/>
-            </fieldset>
-        )}
-        
-        <div style={{ marginTop: '10px' }}>
-          <label>
-            <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} /> 
-            Akceptuję <Link to="/regulamin" target="_blank" rel="noopener noreferrer">regulamin serwisu</Link>.
-          </label>
+                <label>
+                    <input type="checkbox" required /> Akceptuję <a href="/regulamin" target="_blank">regulamin</a> serwisu.
+                </label>
+
+                {error && <p style={{ color: 'red' }}>{error}</p>}
+                {message && <p style={{ color: 'green' }}>{message}</p>}
+
+                <button type="submit" disabled={loading} style={{ padding: '15px', fontSize: '1.2em' }}>
+                    {loading ? 'Rejestrowanie...' : 'Zarejestruj się'}
+                </button>
+            </form>
         </div>
-        
-        {message && <p style={{ color: message.startsWith('Rejestracja') ? 'green' : 'red', textAlign: 'center' }}>{message}</p>}
-
-        <button type="submit" disabled={loading} style={{ marginTop: '10px', width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold' }}>
-            {loading ? 'Rejestrowanie...' : 'Zarejestruj się'}
-        </button>
-      </form>
-
-       <p style={{ marginTop: '20px', textAlign: 'center' }}>Masz już konto? <Link to="/login">Zaloguj się</Link></p>
-    </div>
-  );
+    );
 }
 
 export default RegisterPage;
