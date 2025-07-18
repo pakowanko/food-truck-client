@@ -15,7 +15,6 @@ function RegisterPage() {
         company_name: '',
         nip: ''
     });
-    // Nowe stany dla adresu, oddzielone od głównego formularza
     const [streetAddress, setStreetAddress] = useState('');
     const [postalCode, setPostalCode] = useState('');
     const [city, setCity] = useState('');
@@ -90,7 +89,7 @@ function RegisterPage() {
             <h1>Utwórz nowe konto</h1>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 
-                <fieldset style={{ border: '1px solid #ccc', padding: '15px' }}>
+                <fieldset style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
                     <legend>Wybierz typ konta:</legend>
                     <label style={{ marginRight: '20px' }}>
                         <input type="radio" name="userType" value="organizer" checked={userType === 'organizer'} onChange={(e) => setUserType(e.target.value)} />
@@ -102,36 +101,53 @@ function RegisterPage() {
                     </label>
                 </fieldset>
 
-                <fieldset style={{ border: '1px solid #ccc', padding: '15px' }}>
+                <fieldset style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
                     <legend>Dane podstawowe</legend>
-                    <input type="text" name="first_name" placeholder="Imię" value={formData.first_name} onChange={handleChange} required />
-                    <input type="text" name="last_name" placeholder="Nazwisko" value={formData.last_name} onChange={handleChange} required style={{ marginTop: '10px' }}/>
-                    <input type="email" name="email" placeholder="Adres e-mail" value={formData.email} onChange={handleChange} required style={{ marginTop: '10px' }}/>
-                    <input type="tel" name="phone_number" placeholder="Numer telefonu" value={formData.phone_number} onChange={handleChange} required style={{ marginTop: '10px' }}/>
-                    <select name="country_code" value={formData.country_code} onChange={handleChange} style={{ marginTop: '10px' }}>
+                    <input type="text" name="first_name" placeholder="Imię" value={formData.first_name} onChange={handleChange} required style={{width: '100%'}}/>
+                    <input type="text" name="last_name" placeholder="Nazwisko" value={formData.last_name} onChange={handleChange} required style={{ marginTop: '10px', width: '100%' }}/>
+                    <input type="email" name="email" placeholder="Adres e-mail" value={formData.email} onChange={handleChange} required style={{ marginTop: '10px', width: '100%' }}/>
+                    <input type="tel" name="phone_number" placeholder="Numer telefonu" value={formData.phone_number} onChange={handleChange} required style={{ marginTop: '10px', width: '100%' }}/>
+                    <select name="country_code" value={formData.country_code} onChange={handleChange} style={{ marginTop: '10px', width: '100%', padding: '8px' }}>
                         <option value="PL">Polska</option>
                     </select>
-                    <input type="password" name="password" placeholder="Hasło" value={formData.password} onChange={handleChange} required style={{ marginTop: '10px' }}/>
-                    <input type="password" name="confirmPassword" placeholder="Potwierdź hasło" value={formData.confirmPassword} onChange={handleChange} required style={{ marginTop: '10px' }}/>
+                    <input type="password" name="password" placeholder="Hasło" value={formData.password} onChange={handleChange} required style={{ marginTop: '10px', width: '100%' }}/>
+                    <input type="password" name="confirmPassword" placeholder="Potwierdź hasło" value={formData.confirmPassword} onChange={handleChange} required style={{ marginTop: '10px', width: '100%' }}/>
                 </fieldset>
 
                 {userType === 'food_truck_owner' && (
-                    <fieldset style={{ border: '1px solid #ccc', padding: '15px' }}>
+                    <fieldset style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
                         <legend>Dane Firmy</legend>
-                        <p style={{fontSize: '0.9em', color: '#666', marginTop: 0}}>Jako właściciel food trucka musisz podać dane swojej działalności.</p>
-                        <input type="text" name="company_name" placeholder="Nazwa firmy / działalności" value={formData.company_name} onChange={handleChange} required={userType === 'food_truck_owner'} />
+                        <p style={{ fontSize: '0.9em', color: '#666', marginTop: 0 }}>Jako właściciel food trucka musisz podać dane swojej działalności.</p>
                         
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '10px' }}>
-                            <input type="text" name="nip" placeholder="NIP" value={formData.nip} onChange={handleChange} required={userType === 'food_truck_owner'} style={{flex: 1}}/>
-                            <button type="button" onClick={handleFetchGusData} disabled={loading}>
-                                {loading ? '...' : 'Pobierz dane z GUS'}
-                            </button>
+                        <div style={{ marginTop: '15px' }}>
+                            <label htmlFor="company_name" style={{ display: 'block', marginBottom: '5px' }}>Nazwa firmy / działalności</label>
+                            <input id="company_name" type="text" name="company_name" value={formData.company_name} onChange={handleChange} required={userType === 'food_truck_owner'} style={{ width: '100%' }} />
                         </div>
-                        
-                        <input type="text" placeholder="Ulica i numer" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} required={userType === 'food_truck_owner'} style={{ marginTop: '10px' }}/>
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                            <input type="text" placeholder="Kod pocztowy" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} required={userType === 'food_truck_owner'} style={{ flex: 1 }}/>
-                            <input type="text" placeholder="Miasto" value={city} onChange={(e) => setCity(e.target.value)} required={userType === 'food_truck_owner'} style={{ flex: 2 }}/>
+
+                        <div style={{ marginTop: '15px' }}>
+                            <label htmlFor="nip" style={{ display: 'block', marginBottom: '5px' }}>NIP</label>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <input id="nip" type="text" name="nip" value={formData.nip} onChange={handleChange} required={userType === 'food_truck_owner'} style={{ width: '100%', flex: 1 }}/>
+                                <button type="button" onClick={handleFetchGusData} disabled={loading} style={{ padding: '8px 12px' }}>
+                                    {loading ? '...' : 'Pobierz dane z GUS'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '15px' }}>
+                            <label htmlFor="streetAddress" style={{ display: 'block', marginBottom: '5px' }}>Ulica i numer</label>
+                            <input id="streetAddress" type="text" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} required={userType === 'food_truck_owner'} style={{ width: '100%' }} />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', marginTop: '15px' }}>
+                            <div>
+                                <label htmlFor="postalCode" style={{ display: 'block', marginBottom: '5px' }}>Kod pocztowy</label>
+                                <input id="postalCode" type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} required={userType === 'food_truck_owner'} style={{ width: '100%' }} />
+                            </div>
+                            <div>
+                                <label htmlFor="city" style={{ display: 'block', marginBottom: '5px' }}>Miasto</label>
+                                <input id="city" type="text" value={city} onChange={(e) => setCity(e.target.value)} required={userType === 'food_truck_owner'} style={{ width: '100%' }} />
+                            </div>
                         </div>
                     </fieldset>
                 )}
