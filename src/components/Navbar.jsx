@@ -48,7 +48,6 @@ function Navbar() {
     food_truck_owner: 'Właściciel'
   };
 
-  // Funkcja pomocnicza do wyświetlania poprawnej roli
   const getUserDisplayRole = () => {
     if (!user) return '';
     if (user.role === 'admin') {
@@ -66,12 +65,13 @@ function Navbar() {
         {user ? (
           <>
             <span style={styles.userInfo}>
-              {/* ---- ZMIANA JEST TUTAJ ---- */}
               Witaj, {user.email} (Rola: {getUserDisplayRole()})
             </span>
-            {/* Dodajemy link do panelu admina, jeśli użytkownik jest adminem */}
-            {user.role === 'admin' && <Link to="/admin">Panel Admina</Link>}
-            <Link to="/dashboard">Mój Panel</Link>
+            {user.role === 'admin' ? (
+              <Link to="/admin">Panel Admina</Link>
+            ) : (
+              <Link to="/dashboard">Mój Panel</Link>
+            )}
             <button onClick={handleLogout} style={styles.logoutButton}>Wyloguj</button>
           </>
         ) : (
