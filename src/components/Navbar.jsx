@@ -2,6 +2,9 @@ import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext.jsx';
 
+// URL do Twojego logo
+const logoUrl = 'https://storage.googleapis.com/foodtruck_storage/Logo%20BookTheFoodTruck.jpeg';
+
 const styles = {
   nav: {
     display: 'flex',
@@ -12,11 +15,20 @@ const styles = {
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     borderBottom: `3px solid var(--accent-yellow)`
   },
-  logo: {
+  logoLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    textDecoration: 'none',
+    color: 'var(--dark-text)',
+  },
+  logoImg: {
+    height: '40px', // Dopasuj wysokość logo
+    width: 'auto',
+  },
+  logoText: {
     fontWeight: 'bold',
     fontSize: '1.5rem',
-    color: 'var(--dark-text)',
-    textDecoration: 'none'
   },
   navLinks: {
     display: 'flex',
@@ -45,36 +57,26 @@ function Navbar() {
     logout();
     navigate('/');
   };
-  
-  const roleDisplayMap = {
-    organizer: 'Organizator',
-    food_truck_owner: 'Właściciel'
-  };
-
-  const getUserDisplayRole = () => {
-    if (!user) return '';
-    if (user.role === 'admin') {
-      return 'Administrator';
-    }
-    return roleDisplayMap[user.user_type] || user.user_type;
-  };
 
   return (
     <nav style={styles.nav}>
-      <Link to="/" style={styles.logo}>
-        🚚 BookTheTruck
+      <Link to="/" style={styles.logoLink}>
+        <img src={logoUrl} alt="Book The Food Truck Logo" style={styles.logoImg} />
+        <span style={styles.logoText}>Book The Food Truck</span>
       </Link>
       <div style={styles.navLinks}>
         {user ? (
           <>
             <span style={styles.userInfo}>
-              Witaj, {user.email} (Rola: {getUserDisplayRole()})
+              Witaj, {user.first_name || user.email}!
             </span>
+            
             {user.role === 'admin' ? (
               <Link to="/admin">Panel Admina</Link>
             ) : (
               <Link to="/dashboard">Mój Panel</Link>
             )}
+            
             <Link to="/my-account">Moje Konto</Link>
             <button onClick={handleLogout} style={styles.logoutButton}>Wyloguj</button>
           </>
