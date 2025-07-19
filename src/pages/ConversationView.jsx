@@ -1,17 +1,11 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import io from 'socket.io-client';
-import { api, SOCKET_URL } from '../apiConfig.js';
+import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
-
-const socket = io(SOCKET_URL, { 
-    autoConnect: false,
-    reconnection: true
-});
 
 function ConversationView() {
   const { conversationId } = useParams();
-  const { user } = useContext(AuthContext);
+  const { user, socket } = useContext(AuthContext);
   
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +19,8 @@ function ConversationView() {
   };
 
   useEffect(() => {
-    if (!conversationId || !user) {
+    // Czekamy na ID rozmowy, użytkownika i gotowy socket z kontekstu
+    if (!conversationId || !user || !socket) {
         setMessages([]);
         setLoading(false);
         return;
@@ -34,7 +29,7 @@ function ConversationView() {
     setLoading(true);
     setMessages([]);
 
-    socket.connect();
+    // Dołączamy do pokoju czatu używając globalnego socketa
     socket.emit('join_room', conversationId);
 
     const fetchMessages = async () => {
@@ -50,40 +45,39 @@ function ConversationView() {
     fetchMessages();
 
     const handleReceiveMessage = (message) => {
+      // Dodajemy wiadomość tylko, jeśli dotyczy tej konkretnej, otwartej rozmowy
       if (message.conversation_id.toString() === conversationId) {
         setMessages((prevMessages) => [...prevMessages, message]);
       }
     };
     socket.on('receive_message', handleReceiveMessage);
 
-    socket.on('connect_error', (err) => {
-        console.error('Błąd połączenia z Socket.IO:', err);
-        setError('Nie można połączyć się z serwerem czatu.');
-    });
-
+    // Funkcja czyszcząca - uruchamia się, gdy użytkownik opuszcza tę stronę
     return () => {
       socket.emit('leave_room', conversationId);
       socket.off('receive_message', handleReceiveMessage);
-      socket.disconnect();
     };
-  }, [conversationId, user]);
+  }, [conversationId, user, socket]);
 
   useEffect(scrollToBottom, [messages]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !user) return;
+    if (newMessage.trim() === '' || !user || !socket) return;
+    
     const messageData = {
       conversation_id: conversationId,
       sender_id: user.userId,
       message_content: newMessage,
     };
+    
     socket.emit('send_message', messageData);
     setNewMessage('');
   };
 
   if (loading) return <p>Wczytywanie wiadomości...</p>;
   if (error) return <p style={{color: 'red'}}>{error}</p>;
+  if (!conversationId) return <p style={{textAlign: 'center', color: '#888'}}>Wybierz rozmowę z listy.</p>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -96,7 +90,7 @@ function ConversationView() {
           }}>
             <p style={{
               backgroundColor: msg.sender_id === user.userId ? 'var(--accent-yellow)' : '#f1f0f0',
-              color: msg.sender_id === user.userId ? '#333' : '#333',
+              color: '#333',
               padding: '10px 15px',
               borderRadius: '15px',
               margin: 0,
@@ -106,7 +100,7 @@ function ConversationView() {
               {msg.message_content}
             </p>
           </div>
-        )) : <p style={{textAlign: 'center', color: '#888'}}>Wybierz rozmowę z listy lub napisz pierwszą wiadomość.</p>}
+        )) : <p style={{textAlign: 'center', color: '#888'}}>Napisz pierwszą wiadomość.</p>}
         <div ref={messagesEndRef} />
       </div>
       <form onSubmit={handleSendMessage} style={{ display: 'flex', marginTop: 'auto' }}>
