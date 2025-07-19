@@ -11,7 +11,6 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // Stany dla filtrów
   const [postalCode, setPostalCode] = useState('');
   const [cuisine, setCuisine] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -23,7 +22,6 @@ function HomePage() {
     setLoading(true);
     setError('');
     try {
-      // Usuwamy puste filtry, aby nie wysyłać ich do API
       const activeFilters = Object.fromEntries(Object.entries(filters).filter(([_, v]) => v != null && v !== '' && v !== false));
       const params = new URLSearchParams(activeFilters);
       
@@ -54,24 +52,34 @@ function HomePage() {
     fetchProfiles(filters);
   };
 
+  // --- NOWY OBIEKT ZE STYLAMI ---
+  const searchInputStyle = {
+      width: '100%',
+      padding: '10px',
+      height: '45px',
+      border: '1px solid #ddd',
+      borderRadius: '5px',
+      boxSizing: 'border-box'
+  };
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       <h1>Znajdź food trucka na swoją imprezę</h1>
       <form onSubmit={handleSearch} style={{ padding: '20px', background: '#f9f9f9', borderRadius: '8px', marginBottom: '30px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', alignItems: 'flex-end' }}>
           
-          <select value={cuisine} onChange={e => setCuisine(e.target.value)} style={{ padding: '10px', height: '45px' }}>
+          <select value={cuisine} onChange={e => setCuisine(e.target.value)} style={searchInputStyle}>
             <option value="">Wszystkie kuchnie</option>
             {ALL_CUISINES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           
-          <input type="text" value={postalCode} onChange={e => setPostalCode(e.target.value)} placeholder="Wpisz miasto lub kod..." style={{ padding: '10px', height: '45px' }}/>
+          <input type="text" value={postalCode} onChange={e => setPostalCode(e.target.value)} placeholder="Wpisz miasto lub kod..." style={searchInputStyle}/>
           
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ padding: '10px', height: '45px' }} title="Data rozpoczęcia"/>
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={searchInputStyle} title="Data rozpoczęcia"/>
           
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ padding: '10px', height: '45px' }} title="Data zakończenia"/>
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={searchInputStyle} title="Data zakończenia"/>
           
-          <select value={minRating} onChange={e => setMinRating(e.target.value)} style={{ padding: '10px', height: '45px' }}>
+          <select value={minRating} onChange={e => setMinRating(e.target.value)} style={searchInputStyle}>
               <option value="">Dowolna ocena</option>
               <option value="4">4 gwiazdki i więcej</option>
               <option value="3">3 gwiazdki i więcej</option>
@@ -80,7 +88,7 @@ function HomePage() {
         </div>
         
         <div style={{ marginTop: '15px' }}>
-            <label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input 
                     type="checkbox" 
                     checked={longTermRental} 
@@ -90,7 +98,7 @@ function HomePage() {
             </label>
         </div>
 
-        <button type="submit" style={{ padding: '12px 20px', width: '100%', marginTop: '20px' }}>Szukaj</button>
+        <button type="submit" style={{ padding: '12px 20px', width: '100%', marginTop: '20px', border: 'none', backgroundColor: 'var(--primary-red)', color: 'white', borderRadius: '5px', cursor: 'pointer', fontSize: '1rem' }}>Szukaj</button>
       </form>
       
       {loading && <p>Ładowanie listy food trucków...</p>}
