@@ -12,6 +12,7 @@ import AdminRoute from './components/AdminRoute.jsx';
 import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import VerifyEmailPage from './pages/VerifyEmailPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import CreateProfilePage from './pages/CreateProfilePage.jsx';
 import TruckDetailsPage from './pages/TruckDetailsPage.jsx';
@@ -22,7 +23,6 @@ import ChatLayout from './pages/ChatLayout.jsx';
 import ConversationView from './pages/ConversationView.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import MyAccountPage from './pages/MyAccountPage.jsx';
-
 
 function App() {
   return (
@@ -35,6 +35,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/profile/:profileId" element={<TruckDetailsPage />} />
             <Route path="/regulamin" element={<TermsPage />} />
             <Route path="/polityka-prywatnosci" element={<PrivacyPolicyPage />} />

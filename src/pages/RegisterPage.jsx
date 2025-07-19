@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../apiConfig.js';
 
 function RegisterPage() {
     // Style dla formularza
     const inputStyle = {
-        width: '100%',
-        padding: '12px',
-        fontSize: '1rem',
-        border: '1px solid #ccc',
-        borderRadius: '5px',
-        boxSizing: 'border-box',
-        height: '48px' // Ujednolicona wysokość
+        width: '100%', padding: '12px', fontSize: '1rem', border: '1px solid #ccc',
+        borderRadius: '5px', boxSizing: 'border-box', height: '48px'
     };
     const formRowStyle = { marginTop: '15px' };
     const labelStyle = { display: 'block', marginBottom: '5px', fontWeight: '500' };
@@ -19,15 +14,8 @@ function RegisterPage() {
     // Stany komponentu
     const [userType, setUserType] = useState('organizer');
     const [formData, setFormData] = useState({
-        first_name: '',
-        last_name: '',
-        email: '',
-        phone_number: '',
-        country_code: 'PL',
-        password: '',
-        confirmPassword: '',
-        company_name: '',
-        nip: ''
+        first_name: '', last_name: '', email: '', phone_number: '', country_code: 'PL',
+        password: '', confirmPassword: '', company_name: '', nip: ''
     });
     const [streetAddress, setStreetAddress] = useState('');
     const [postalCode, setPostalCode] = useState('');
@@ -36,6 +24,7 @@ function RegisterPage() {
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const [registrationSuccess, setRegistrationSuccess] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -86,17 +75,26 @@ function RegisterPage() {
         };
 
         try {
-            await api.post('/auth/register', submissionData);
-            setMessage('Rejestracja pomyślna! Za chwilę zostaniesz przekierowany do strony logowania.');
-            setTimeout(() => {
-                navigate('/login');
-            }, 3000);
+            const response = await api.post('/auth/register', submissionData);
+            setMessage(response.data.message);
+            setRegistrationSuccess(true);
         } catch (err) {
             setError(err.response?.data?.message || 'Wystąpił błąd podczas rejestracji.');
         } finally {
             setLoading(false);
         }
     };
+
+    if (registrationSuccess) {
+        return (
+            <div style={{ textAlign: 'center', padding: '50px', maxWidth: '600px', margin: '2rem auto', border: '1px solid #eee', borderRadius: '8px' }}>
+                <h1>Rejestracja prawie ukończona!</h1>
+                <p style={{ color: 'green', fontSize: '1.2rem' }}>{message}</p>
+                <p>Wysłaliśmy link aktywacyjny na Twój adres e-mail. Sprawdź swoją skrzynkę odbiorczą (oraz folder spam), aby dokończyć proces.</p>
+                <Link to="/" style={{marginTop: '20px', display: 'inline-block'}}>Powrót na stronę główną</Link>
+            </div>
+        );
+    }
 
     return (
         <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '2rem' }}>
