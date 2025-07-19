@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../AuthContext.jsx';
 import { api } from '../apiConfig.js';
+import imageCompression from 'browser-image-compression';
 
 const offerOptions = {
   dishes: ["Burgery", "Pizza", "Zapiekanki", "Hot-dogi", "Frytki belgijskie", "Nachos", "Kuchnia polska", "Kuchnia azjatycka", "Kuchnia meksykańska", "Lody", "Gofry", "Churros", "Słodkie wypieki"],
@@ -63,6 +64,41 @@ function CreateProfilePage() {
         : currentCategoryItems.filter(item => item !== value);
       return { ...prevOffer, [category]: updatedCategoryItems };
     });
+  };
+  
+  const handlePhotoChange = async (event) => {
+    const imageFiles = Array.from(event.target.files);
+    if (!imageFiles.length) return;
+
+    setMessage('Kompresowanie zdjęć, proszę czekać...');
+    setLoading(true);
+
+    const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+    };
+
+    try {
+        const compressedFilesPromises = imageFiles.map(file => {
+            console.log(`Kompresowanie pliku: ${file.name}, rozmiar: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            return imageCompression(file, options);
+        });
+        
+        const compressedFiles = await Promise.all(compressedFilesPromises);
+        
+        compressedFiles.forEach(file => {
+            console.log(`Skompresowany plik: ${file.name}, nowy rozmiar: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+        });
+
+        setPhotos(compressedFiles);
+        setMessage(`Gotowe! Załadowano ${compressedFiles.length} zdjęć.`);
+    } catch (error) {
+        setMessage('Błąd podczas kompresji zdjęć.');
+        console.error(error);
+    } finally {
+        setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -169,13 +205,13 @@ function CreateProfilePage() {
         <fieldset style={styles.fieldset}>
             <legend>Galeria Zdjęć (max 10)</legend>
             <p>Uwaga: ponowne dodanie zdjęć w trybie edycji zastąpi istniejącą galerię.</p>
-            <input type="file" multiple accept="image/*" onChange={(e) => setPhotos(e.target.files)} style={styles.input} />
+            <input type="file" multiple accept="image/*" onChange={handlePhotoChange} style={styles.input} />
         </fieldset>
 
-        {message && <p style={{ color: message.startsWith('Profil') ? 'green' : 'red', textAlign: 'center' }}>{message}</p>}
+        {message && <p style={{ color: message.startsWith('Profil') || message.startsWith('Gotowe') ? 'green' : 'red', textAlign: 'center' }}>{message}</p>}
 
         <button type="submit" disabled={loading} style={{ padding: '15px', fontSize: '16px', fontWeight: 'bold' }}>
-          {loading ? 'Zapisywanie...' : (isEditMode ? 'Zapisz zmiany' : 'Utwórz profil')}
+          {loading ? 'Przetwarzanie...' : (isEditMode ? 'Zapisz zmiany' : 'Utwórz profil')}
         </button>
       </form>
     </div>
