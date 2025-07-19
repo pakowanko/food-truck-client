@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { api, SOCKET_URL } from './apiConfig.js';
 
-// Tworzymy jedną, globalną instancję socketa
 const socket = io(SOCKET_URL, { 
     autoConnect: false,
     reconnection: true,
@@ -16,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
-  const [notification, setNotification] = useState(null); // Nowy stan na powiadomienia
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     const validateToken = async () => {
@@ -43,30 +42,38 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   useEffect(() => {
-    if (user && token) {
+    if (!loading && user) {
         if (!socket.connected) {
             socket.connect();
         }
-        
-        socket.on('connect', () => {
+
+        const onConnect = () => {
             console.log('Połączono z globalnym socketem:', socket.id);
             socket.emit('register_user', user.userId);
-        });
-
-        socket.on('new_message_notification', (data) => {
+        };
+        
+        const onNewMessage = (data) => {
             setNotification(data);
             setTimeout(() => setNotification(null), 8000);
-        });
-    }
+        };
+        
+        socket.on('connect', onConnect);
+        socket.on('new_message_notification', onNewMessage);
 
-    return () => {
-        socket.off('new_message_notification');
-        socket.off('connect');
+        return () => {
+            console.log("Czyszczenie listenerów i rozłączanie socketu.");
+            socket.off('connect', onConnect);
+            socket.off('new_message_notification', onNewMessage);
+            if (socket.connected) {
+                socket.disconnect();
+            }
+        };
+    } else if (!loading && !user) {
         if (socket.connected) {
             socket.disconnect();
         }
     }
-  }, [user, token]);
+  }, [user, loading]);
 
   const login = (userData, userToken) => {
     localStorage.setItem('token', userToken);
@@ -82,28 +89,21 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     delete api.defaults.headers.common['Authorization'];
-    if (socket.connected) {
-        socket.disconnect();
-    }
   };
 
   const value = useMemo(() => ({
-    user,
-    token,
-    loading,
-    login,
-    logout,
-    socket 
+    user, token, loading, login, logout, socket 
   }), [user, token, loading]);
 
   return (
     <AuthContext.Provider value={value}>
       {notification && <NotificationPopup notification={notification} onClose={() => setNotification(null)} />}
       {!loading && children}
-    </AuthContext.Provider>
+    </Auth-Context.Provider>
   );
 };
 
+// Pełna, działająca wersja komponentu powiadomienia
 function NotificationPopup({ notification, onClose }) {
     const navigate = useNavigate();
 
