@@ -10,6 +10,24 @@ const socket = io(SOCKET_URL, {
 
 export const AuthContext = createContext(null);
 
+export function NotificationPopup({ notification, onClose }) {
+    const navigate = useNavigate();
+    const handleClick = () => {
+        navigate(`/chat/${notification.conversationId}`);
+        onClose();
+    };
+    return (
+        <div onClick={handleClick} style={{
+            position: 'fixed', bottom: '20px', right: '20px', backgroundColor: 'white', 
+            padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 2000, cursor: 'pointer', maxWidth: '320px', borderLeft: '5px solid var(--primary-red)'
+        }}>
+            <p style={{ margin: 0, fontWeight: 'bold' }}>Nowa wiadomość od {notification.senderName}</p>
+            <p style={{ margin: '5px 0 0', color: '#666' }}>{notification.messagePreview}</p>
+        </div>
+    );
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('token'));
@@ -17,7 +35,9 @@ export const AuthProvider = ({ children }) => {
   const [notification, setNotification] = useState(null);
 
   const logout = useCallback(() => {
-    socket.disconnect();
+    if (socket.connected) {
+        socket.disconnect();
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setToken(null);
@@ -56,13 +76,17 @@ export const AuthProvider = ({ children }) => {
             socket.connect();
         }
         
-        socket.on('connect', () => {
+        const onConnect = () => {
             console.log('Połączono z globalnym socketem i rejestruję użytkownika:', user.userId);
             socket.emit('register_user', user.userId);
-        });
-
+        };
+        
+        socket.on('connect', onConnect);
         socket.on('new_message_notification', onNewMessage);
 
+        if (socket.connected) {
+            onConnect();
+        }
     }
 
     return () => {
@@ -80,33 +104,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const value = useMemo(() => ({
-    user, token, loading, login, logout, socket 
-  }), [user, token, loading, logout]);
+    user, token, loading, login, logout, socket, notification, setNotification
+  }), [user, token, loading, logout, notification]);
 
   return (
     <AuthContext.Provider value={value}>
-      {notification && <NotificationPopup notification={notification} onClose={() => setNotification(null)} />}
       {!loading && children}
     </AuthContext.Provider>
   );
 };
-
-function NotificationPopup({ notification, onClose }) {
-    const navigate = useNavigate();
-    const handleClick = () => {
-        navigate(`/chat/${notification.conversationId}`);
-        onClose();
-    };
-    return (
-        <div onClick={handleClick} style={{
-            position: 'fixed', bottom: '20px', right: '20px', backgroundColor: 'white', 
-            padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            zIndex: 2000, cursor: 'pointer', maxWidth: '320px', borderLeft: '5px solid var(--primary-red)'
-        }}>
-            <p style={{ margin: 0, fontWeight: 'bold' }}>Nowa wiadomość od {notification.senderName}</p>
-            <p style={{ margin: '5px 0 0', color: '#666' }}>{notification.messagePreview}</p>
-        </div>
-    );
-}
-
-export default AuthProvider;

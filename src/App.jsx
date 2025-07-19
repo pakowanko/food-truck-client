@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './AuthContext.jsx';
+import { AuthProvider, AuthContext, NotificationPopup } from './AuthContext.jsx';
 
 // Import komponentów
 import Navbar from './components/Navbar.jsx';
@@ -24,10 +24,18 @@ import ConversationView from './pages/ConversationView.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import MyAccountPage from './pages/MyAccountPage.jsx';
 
+// Komponent pomocniczy do zarządzania powiadomieniami wewnątrz Routera
+const NotificationManager = () => {
+  const { notification, setNotification } = useContext(AuthContext);
+  if (!notification) return null;
+  return <NotificationPopup notification={notification} onClose={() => setNotification(null)} />;
+}
+
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <NotificationManager />
         <Navbar />
         <main>
           <Routes>
