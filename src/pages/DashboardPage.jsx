@@ -28,7 +28,6 @@ const ReminderModal = ({ onClose }) => (
     </div>
 );
 
-
 function DashboardPage() {
   const { user, token, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -38,7 +37,8 @@ function DashboardPage() {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [currentRequestId, setCurrentRequestId] = useState(null);
@@ -74,10 +74,10 @@ function DashboardPage() {
   }, [authLoading, user, token, navigate]);
 
   const handleUpdateStatus = async (requestId, newStatus) => {
+    setUpdatingStatusId(requestId);
     setError('');
     try {
         await api.put(`/requests/${requestId}/status`, { status: newStatus });
-
         if (newStatus === 'confirmed') {
             const confirmedRequest = requests.find(req => req.request_id === requestId);
             if (confirmedRequest) {
@@ -93,6 +93,8 @@ function DashboardPage() {
         await fetchData(); 
     } catch (err) {
         setError(err.response?.data?.message || 'Nie udało się zmienić statusu rezerwacji.');
+    } finally {
+        setUpdatingStatusId(null);
     }
   };
   
@@ -136,6 +138,7 @@ function DashboardPage() {
   };
 
   const formatDateRange = (start, end) => {
+    if (!start || !end) return 'Brak daty';
     const startDate = new Date(start).toLocaleDateString();
     const endDate = new Date(end).toLocaleDateString();
     return startDate === endDate ? startDate : `${startDate} - ${endDate}`;
@@ -253,8 +256,12 @@ function DashboardPage() {
                   <div style={{ marginTop: '15px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     {user.user_type === 'food_truck_owner' && req.status === 'pending_owner_approval' && (
                       <>
-                        <button onClick={() => handleUpdateStatus(req.request_id, 'confirmed')} style={{backgroundColor: 'green', color: 'white'}}>Akceptuj</button>
-                        <button onClick={() => handleUpdateStatus(req.request_id, 'rejected_by_owner')} style={{backgroundColor: 'red', color: 'white'}}>Odrzuć</button>
+                        <button onClick={() => handleUpdateStatus(req.request_id, 'confirmed')} disabled={updatingStatusId === req.request_id} style={{backgroundColor: 'green', color: 'white'}}>
+                            {updatingStatusId === req.request_id ? 'Przetwarzanie...' : 'Akceptuj'}
+                        </button>
+                        <button onClick={() => handleUpdateStatus(req.request_id, 'rejected_by_owner')} disabled={updatingStatusId === req.request_id} style={{backgroundColor: 'red', color: 'white'}}>
+                            Odrzuć
+                        </button>
                       </>
                     )}
                     {user.user_type === 'food_truck_owner' && req.status === 'confirmed' && (

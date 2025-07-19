@@ -27,6 +27,7 @@ function TruckDetailsPage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError('');
       try {
         const [profileRes, reviewsRes] = await Promise.all([
           api.get(`/profiles/${profileId}`),
@@ -34,12 +35,16 @@ function TruckDetailsPage() {
         ]);
         
         setProfile(profileRes.data);
-        setReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data : []);
+        const reviewsData = Array.isArray(reviewsRes.data) ? reviewsRes.data : [];
+        setReviews(reviewsData);
 
-        if (reviewsRes.data && reviewsRes.data.length > 0) {
-          const totalRating = reviewsRes.data.reduce((acc, review) => acc + review.rating, 0);
-          setAverageRating(totalRating / reviewsRes.data.length);
+        if (reviewsData.length > 0) {
+          const totalRating = reviewsData.reduce((acc, review) => acc + review.rating, 0);
+          setAverageRating(totalRating / reviewsData.length);
+        } else {
+          setAverageRating(0);
         }
+
       } catch (err) {
         setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
       } finally {
@@ -54,12 +59,12 @@ function TruckDetailsPage() {
     gallery: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' },
     galleryImage: { width: '100%', height: '150px', objectFit: 'cover', borderRadius: '4px' },
     tag: { background: '#e9e9e9', padding: '5px 10px', borderRadius: '15px' },
-    bookButton: { display: 'inline-block', padding: '15px 30px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', color: 'white', backgroundColor: '#D9534F', borderRadius: '5px', textAlign: 'center' }
+    bookButton: { display: 'inline-block', padding: '15px 30px', fontSize: '1.2rem', fontWeight: 'bold', textDecoration: 'none', color: 'white', backgroundColor: 'var(--primary-red)', borderRadius: '5px', textAlign: 'center' }
   };
 
-  if (loading) return <p>Ładowanie profilu food trucka...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
-  if (!profile) return <p>Nie znaleziono tego food trucka.</p>;
+  if (loading) return <p style={{textAlign: 'center', marginTop: '50px'}}>Ładowanie profilu food trucka...</p>;
+  if (error) return <p style={{ color: 'red', textAlign: 'center', marginTop: '50px' }}>{error}</p>;
+  if (!profile) return <p style={{textAlign: 'center', marginTop: '50px'}}>Nie znaleziono tego food trucka.</p>;
 
   return (
     <div style={{ maxWidth: '900px', margin: '20px auto', padding: '20px' }}>
@@ -71,13 +76,27 @@ function TruckDetailsPage() {
       </p>
       {profile.website_url && <p><strong>Strona WWW:</strong> <a href={profile.website_url} target="_blank" rel="noopener noreferrer">{profile.website_url}</a></p>}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '20px 0', paddingBottom: '20px', borderBottom: '1px solid #eee' }}>
-        <StarRatingDisplay rating={averageRating} />
-        <span>({averageRating.toFixed(2)} / 5 na podstawie {reviews.length} opinii)</span>
-      </div>
-
-      {reviews.length > 0 ? (
-          <section>
+      <section style={styles.section}>
+        <h2>Galeria Food Trucka</h2>
+        {profile.gallery_photo_urls && profile.gallery_photo_urls.length > 0 ? (
+          <div style={styles.gallery}>
+            {profile.gallery_photo_urls.map((url, index) => (
+              <img key={index} src={url} alt={`${profile.food_truck_name} ${index + 1}`} style={styles.galleryImage} />
+            ))}
+          </div>
+        ) : (
+          <p>Właściciel nie dodał jeszcze żadnych zdjęć.</p>
+        )}
+      </section>
+      
+      <section style={styles.section}>
+        <h2>Opinie</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+          <StarRatingDisplay rating={averageRating} />
+          <span>({averageRating.toFixed(1)} / 5 na podstawie {reviews.length} opinii)</span>
+        </div>
+        {reviews.length > 0 ? (
+          <div>
             {reviews.map(review => (
               <div key={review.review_id} style={{ borderBottom: '1px solid #eee', paddingBottom: '15px', marginBottom: '15px' }}>
                 <StarRatingDisplay rating={review.rating} />
@@ -85,16 +104,25 @@ function TruckDetailsPage() {
                 <small>– {review.first_name}, {new Date(review.created_at).toLocaleDateString()}</small>
               </div>
             ))}
-          </section>
+          </div>
       ) : <p>Ten food truck nie ma jeszcze żadnych opinii.</p>}
+      </section>
 
-      {user && user.user_type === 'organizer' && (
-        <div style={{margin: '30px 0'}}>
+      <div style={{margin: '40px 0', textAlign: 'center'}}>
+          {!user && (
+            <Link to="/register" style={styles.bookButton}>
+                Zarejestruj się, aby dokonać rezerwacji
+            </Link>
+          )}
+          {user && user.user_type === 'organizer' && (
             <Link to={`/booking/${profile.profile_id}`} style={styles.bookButton}>
                 Zarezerwuj ten Food Truck
             </Link>
-        </div>
-      )}
+          )}
+          {user && user.user_type === 'food_truck_owner' && (
+            <p style={{fontStyle: 'italic', color: '#6c757d'}}>Aby zarezerwować, zaloguj się na konto organizatora.</p>
+          )}
+      </div>
 
       {profile.offer && (
         <section style={styles.section}>
@@ -125,19 +153,6 @@ function TruckDetailsPage() {
           )}
         </section>
       )}
-
-      <section style={styles.section}>
-        <h2>Galeria Food Trucka</h2>
-        {profile.gallery_photo_urls && profile.gallery_photo_urls.length > 0 ? (
-          <div style={styles.gallery}>
-            {profile.gallery_photo_urls.map((url, index) => (
-              <img key={index} src={url} alt={`${profile.food_truck_name} ${index + 1}`} style={styles.galleryImage} />
-            ))}
-          </div>
-        ) : (
-          <p>Właściciel nie dodał jeszcze żadnych zdjęć.</p>
-        )}
-      </section>
     </div>
   );
 }
