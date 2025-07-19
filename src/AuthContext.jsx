@@ -99,11 +99,10 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={value}>
       {notification && <NotificationPopup notification={notification} onClose={() => setNotification(null)} />}
       {!loading && children}
-    </Auth-Context.Provider>
+    </AuthContext.Provider>
   );
 };
 
-// Pełna, działająca wersja komponentu powiadomienia
 function NotificationPopup({ notification, onClose }) {
     const navigate = useNavigate();
 
