@@ -60,6 +60,10 @@ export const AuthProvider = ({ children }) => {
         socket.on('connect', onConnect);
         socket.on('new_message_notification', onNewMessage);
 
+        if (socket.connected) {
+            onConnect();
+        }
+
         return () => {
             console.log("Czyszczenie listenerów i rozłączanie socketu.");
             socket.off('connect', onConnect);
@@ -124,3 +128,5 @@ function NotificationPopup({ notification, onClose }) {
         </div>
     );
 }
+
+export default AuthProvider;
