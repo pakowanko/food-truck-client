@@ -6,7 +6,10 @@ function BookingPage() {
   const { profileId } = useParams();
   const navigate = useNavigate();
 
-  const [eventDate, setEventDate] = useState('');
+  // --- ZMIANA: Rozdzielenie daty na początkową i końcową ---
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   const [eventTime, setEventTime] = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const [eventType, setEventType] = useState('');
@@ -31,7 +34,10 @@ function BookingPage() {
 
     const bookingData = {
       profile_id: parseInt(profileId),
-      event_date: eventDate,
+      // --- ZMIANA: Wysyłanie zakresu dat ---
+      event_start_date: startDate,
+      // Jeśli data końcowa nie jest ustawiona, użyj tej samej co początkowa
+      event_end_date: endDate || startDate, 
       event_time: eventTime,
       event_location: eventLocation,
       event_type: eventType,
@@ -61,10 +67,19 @@ function BookingPage() {
       <p>Proszę wypełnić szczegóły Twojego wydarzenia.</p>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-        <div>
-          <label>Data wydarzenia:</label>
-          <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} required />
+        
+        {/* --- ZMIANA: Dwa pola daty zamiast jednego --- */}
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{flex: 1}}>
+            <label>Data rozpoczęcia:</label>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required style={{width: '100%'}} />
+          </div>
+          <div style={{flex: 1}}>
+            <label>Data zakończenia:</label>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} min={startDate} style={{width: '100%'}} />
+          </div>
         </div>
+
         <div>
           <label>Godziny wydarzenia (np. 14:00 - 22:00):</label>
           <input type="text" value={eventTime} onChange={e => setEventTime(e.target.value)} placeholder="np. 14:00 - 22:00" required />

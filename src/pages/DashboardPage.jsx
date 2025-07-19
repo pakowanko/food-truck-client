@@ -82,7 +82,7 @@ function DashboardPage() {
             const confirmedRequest = requests.find(req => req.request_id === requestId);
             if (confirmedRequest) {
                 const today = new Date();
-                const eventDate = new Date(confirmedRequest.event_date);
+                const eventDate = new Date(confirmedRequest.event_start_date);
                 const daysUntilEvent = (eventDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
 
                 if (daysUntilEvent <= 7) {
@@ -131,8 +131,14 @@ function DashboardPage() {
   };
   
   const isRequestCompleted = (req) => {
-    const eventDate = req.event_date;
-    return new Date(eventDate) < new Date() && req.status === 'confirmed';
+    const eventEndDate = req.event_end_date;
+    return new Date(eventEndDate) < new Date() && req.status === 'confirmed';
+  };
+
+  const formatDateRange = (start, end) => {
+    const startDate = new Date(start).toLocaleDateString();
+    const endDate = new Date(end).toLocaleDateString();
+    return startDate === endDate ? startDate : `${startDate} - ${endDate}`;
   };
 
   if (authLoading || loading) return <p style={{textAlign: 'center', marginTop: '50px'}}>Ładowanie panelu...</p>;
@@ -174,7 +180,6 @@ function DashboardPage() {
                 + Dodaj nowy profil
               </Link>
             </div>
-
             {profiles.length > 0 ? (
               profiles.map(profile => (
                 <div key={profile.profile_id} style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '5px', display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '10px' }}>
@@ -234,7 +239,7 @@ function DashboardPage() {
                   
                   <div style={{background: '#f9f9f9', padding: '10px', marginTop: '10px', borderRadius: '5px'}}>
                       <h4 style={{marginTop: 0}}>Szczegóły wydarzenia</h4>
-                      <p><strong>Data:</strong> {new Date(req.event_date).toLocaleDateString()}</p>
+                      <p><strong>Data:</strong> {formatDateRange(req.event_start_date, req.event_end_date)}</p>
                       <p><strong>Godziny:</strong> {req.event_time}</p>
                       <p><strong>Lokalizacja:</strong> {req.event_location}</p>
                       <p><strong>Typ wydarzenia:</strong> {req.event_type}</p>
