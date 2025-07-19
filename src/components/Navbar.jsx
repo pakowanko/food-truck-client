@@ -23,7 +23,7 @@ const styles = {
     color: 'var(--dark-text)',
   },
   logoImg: {
-    height: '40px', // Dopasuj wysokość logo
+    height: '80px', // Dopasuj wysokość logo
     width: 'auto',
   },
   logoText: {
