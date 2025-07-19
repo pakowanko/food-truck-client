@@ -98,6 +98,22 @@ function DashboardPage() {
     }
   };
   
+  const handleCancelBooking = async (requestId) => {
+    const confirmation = window.confirm("Czy na pewno chcesz anulować tę rezerwację? Tej operacji nie można cofnąć.");
+    if (confirmation) {
+        setUpdatingStatusId(requestId);
+        setError('');
+        try {
+            await api.put(`/requests/${requestId}/cancel`);
+            await fetchData();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Nie udało się anulować rezerwacji.');
+        } finally {
+            setUpdatingStatusId(null);
+        }
+    }
+  };
+
   const handleInitiateBookingChat = async (requestId) => {
     try {
         const { data } = await api.post('/conversations/initiate/booking', { requestId });
@@ -264,8 +280,20 @@ function DashboardPage() {
                         </button>
                       </>
                     )}
-                    {user.user_type === 'food_truck_owner' && req.status === 'confirmed' && (
-                        <p style={{color: 'blue', fontWeight: 'bold'}}>Zaakceptowano!</p>
+                    
+                    {req.status === 'confirmed' && (
+                        <>
+                            <p style={{color: 'green', fontWeight: 'bold'}}>Potwierdzona!</p>
+                            <button onClick={() => handleCancelBooking(req.request_id)} disabled={updatingStatusId === req.request_id} style={{backgroundColor: 'grey', color: 'white'}}>
+                                {updatingStatusId === req.request_id ? 'Anulowanie...' : 'Anuluj rezerwację'}
+                            </button>
+                        </>
+                    )}
+
+                    {(req.status === 'cancelled_by_organizer' || req.status === 'cancelled_by_owner' || req.status === 'rejected_by_owner') && (
+                        <p style={{color: 'red', fontWeight: 'bold'}}>
+                            {req.status === 'rejected_by_owner' ? 'Odrzucona' : 'Anulowana'}
+                        </p>
                     )}
                     
                     <button onClick={() => handleInitiateBookingChat(req.request_id)}>Rozmawiaj o tej rezerwacji</button>
