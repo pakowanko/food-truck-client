@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { api } from '../apiConfig.js';
+import { AuthContext } from '../AuthContext.jsx';
 
 function RegisterPage() {
     // Style dla formularza
@@ -25,7 +27,9 @@ function RegisterPage() {
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
+    
     const navigate = useNavigate();
+    const { login } = useContext(AuthContext);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,20 +62,14 @@ function RegisterPage() {
         e.preventDefault();
         setError('');
         setMessage('');
-
         if (formData.password !== formData.confirmPassword) {
             setError("Hasła nie są takie same.");
             return;
         }
-
         setLoading(true);
-
         const submissionData = {
-            ...formData,
-            user_type: userType,
-            street_address: streetAddress,
-            postal_code: postalCode,
-            city: city
+            ...formData, user_type: userType,
+            street_address: streetAddress, postal_code: postalCode, city: city
         };
 
         try {
@@ -84,6 +82,29 @@ function RegisterPage() {
             setLoading(false);
         }
     };
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        setMessage('');
+        try {
+            const response = await api.post('/auth/google-login', { credential: credentialResponse.credential });
+            const data = response.data;
+            login(data, data.token);
+
+            if (data.role === 'admin') {
+                navigate('/admin', { replace: true });
+            } else {
+                navigate('/dashboard', { replace: true });
+            }
+        } catch (error) {
+            setLoading(false);
+            setError(error.response?.data?.message || 'Błąd logowania przez Google.');
+        }
+      };
+    
+      const handleGoogleError = () => {
+        setError('Logowanie przez Google nie powiodło się. Spróbuj ponownie.');
+      };
 
     if (registrationSuccess) {
         return (
@@ -100,8 +121,7 @@ function RegisterPage() {
         <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '2rem' }}>
             <h1>Utwórz nowe konto</h1>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                
-                <fieldset style={{ border: '1px solid #eee', padding: '15px', borderRadius: '5px' }}>
+            <fieldset style={{ border: '1px solid #eee', padding: '15px', borderRadius: '5px' }}>
                     <legend>Wybierz typ konta:</legend>
                     <div style={{ display: 'flex', gap: '20px' }}>
                         <label><input type="radio" name="userType" value="organizer" checked={userType === 'organizer'} onChange={(e) => setUserType(e.target.value)} /> Jestem Organizatorem</label>
@@ -140,10 +160,27 @@ function RegisterPage() {
                 )}
 
                 <div style={formRowStyle}><label><input type="checkbox" required /> Akceptuję <a href="/regulamin" target="_blank" style={{color: 'var(--primary-red)'}}>regulamin</a> serwisu.</label></div>
-                {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-                {message && <p style={{ color: 'green', textAlign: 'center' }}>{message}</p>}
                 <button type="submit" disabled={loading} style={{ ...inputStyle, backgroundColor: 'var(--primary-red)', color: 'white', fontSize: '1.2em', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}>{loading ? 'Rejestrowanie...' : 'Zarejestruj się'}</button>
             </form>
+
+            <div style={{ textAlign: 'center', margin: '20px 0', color: '#888', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <hr style={{flex: 1, borderTop: '1px solid #ddd'}} />
+                <span>LUB</span>
+                <hr style={{flex: 1, borderTop: '1px solid #ddd'}} />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    useOneTap
+                />
+            </div>
+
+            {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+            {message && <p style={{ color: 'green', textAlign: 'center' }}>{message}</p>}
+            
+            <p style={{ marginTop: '20px', textAlign: 'center' }}>Masz już konto? <Link to="/login">Zaloguj się</Link></p>
         </div>
     );
 }
