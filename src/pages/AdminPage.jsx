@@ -16,7 +16,7 @@ const EditUserModal = ({ user, onClose, onSave }) => {
 
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-            <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '500px' }}>
+            <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
                 <h2 style={{marginTop: 0}}>Edytuj użytkownika: {user.email}</h2>
                 <form onSubmit={handleSubmit}>
                     <label>Typ konta:</label>
@@ -30,6 +30,17 @@ const EditUserModal = ({ user, onClose, onSave }) => {
 
                     <label style={{display: 'block', marginTop: '15px'}}>NIP:</label>
                     <input name="nip" value={formData.nip || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+                    
+                    {/* --- NOWE POLA ADRESOWE --- */}
+                    <label style={{display: 'block', marginTop: '15px'}}>Ulica i numer:</label>
+                    <input name="street_address" value={formData.street_address || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+
+                    <label style={{display: 'block', marginTop: '15px'}}>Kod pocztowy:</label>
+                    <input name="postal_code" value={formData.postal_code || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+
+                    <label style={{display: 'block', marginTop: '15px'}}>Miasto:</label>
+                    <input name="city" value={formData.city || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+                    {/* --- KONIEC NOWYCH PÓL --- */}
 
                     <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                         <button type="button" onClick={onClose}>Anuluj</button>
