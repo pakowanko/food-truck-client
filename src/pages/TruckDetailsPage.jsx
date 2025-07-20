@@ -74,8 +74,7 @@ function TruckDetailsPage() {
       <p style={{ color: '#6c757d' }}>
         <strong>Lokalizacja:</strong> {profile.base_location} (działamy w promieniu {profile.operation_radius_km || 'N/A'} km)
       </p>
-      {profile.website_url && <p><strong>Strona WWW:</strong> <a href={profile.website_url} target="_blank" rel="noopener noreferrer">{profile.website_url}</a></p>}
-
+      
       <section style={styles.section}>
         <h2>Galeria Food Trucka</h2>
         {profile.gallery_photo_urls && profile.gallery_photo_urls.length > 0 ? (

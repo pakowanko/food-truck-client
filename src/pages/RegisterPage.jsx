@@ -4,6 +4,14 @@ import { GoogleLogin } from '@react-oauth/google';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
 
+// Prosty komponent ikony oka
+const EyeIcon = ({ size = 24, color = '#6c757d' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+);
+const EyeOffIcon = ({ size = 24, color = '#6c757d' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+);
+
 function RegisterPage() {
     // Style dla formularza
     const inputStyle = {
@@ -22,6 +30,8 @@ function RegisterPage() {
     const [streetAddress, setStreetAddress] = useState('');
     const [postalCode, setPostalCode] = useState('');
     const [city, setCity] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -136,8 +146,24 @@ function RegisterPage() {
                     <div style={formRowStyle}><label htmlFor="email" style={labelStyle}>Adres e-mail</label><input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required style={inputStyle} /></div>
                     <div style={formRowStyle}><label htmlFor="phone_number" style={labelStyle}>Numer telefonu</label><input id="phone_number" type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} required style={inputStyle} /></div>
                     <div style={formRowStyle}><label htmlFor="country_code" style={labelStyle}>Kraj rezydencji podatkowej</label><select id="country_code" name="country_code" value={formData.country_code} onChange={handleChange} style={inputStyle}><option value="PL">Polska</option></select></div>
-                    <div style={formRowStyle}><label htmlFor="password" style={labelStyle}>Hasło</label><input id="password" type="password" name="password" value={formData.password} onChange={handleChange} required style={inputStyle} /></div>
-                    <div style={formRowStyle}><label htmlFor="confirmPassword" style={labelStyle}>Potwierdź hasło</label><input id="confirmPassword" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required style={inputStyle} /></div>
+                    <div style={formRowStyle}>
+                        <label htmlFor="password" style={labelStyle}>Hasło</label>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <input id="password" type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} required style={{...inputStyle, paddingRight: '50px'}} />
+                            <div onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '15px', cursor: 'pointer', display: 'flex' }}>
+                                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                            </div>
+                        </div>
+                    </div>
+                    <div style={formRowStyle}>
+                        <label htmlFor="confirmPassword" style={labelStyle}>Potwierdź hasło</label>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required style={{...inputStyle, paddingRight: '50px'}} />
+                            <div onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '15px', cursor: 'pointer', display: 'flex' }}>
+                                {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                            </div>
+                        </div>
+                    </div>
                 </fieldset>
 
                 {userType === 'food_truck_owner' && (

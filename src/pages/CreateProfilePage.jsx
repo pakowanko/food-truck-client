@@ -20,7 +20,6 @@ function CreateProfilePage() {
   const [description, setDescription] = useState('');
   const [baseLocation, setBaseLocation] = useState('');
   const [operationRadius, setOperationRadius] = useState('');
-  const [website, setWebsite] = useState('');
   const [offer, setOffer] = useState({ dishes: [], drinks: [], dietary: [] });
   const [photos, setPhotos] = useState(null);
   const [longTermRental, setLongTermRental] = useState(false);
@@ -41,7 +40,6 @@ function CreateProfilePage() {
         setDescription(data.food_truck_description || '');
         setBaseLocation(data.base_location || '');
         setOperationRadius(data.operation_radius_km || '');
-        setWebsite(data.website_url || '');
         setOffer(data.offer || { dishes: [], drinks: [], dietary: [] });
         setLongTermRental(data.long_term_rental_available || false);
       } catch (error) {
@@ -111,7 +109,6 @@ function CreateProfilePage() {
     formData.append('food_truck_description', description);
     formData.append('base_location', baseLocation);
     formData.append('operation_radius_km', operationRadius);
-    formData.append('website_url', website);
     formData.append('offer', JSON.stringify(offer));
     formData.append('long_term_rental_available', longTermRental);
 
@@ -142,15 +139,15 @@ function CreateProfilePage() {
   
   const styles = {
     form: { display: 'flex', flexDirection: 'column', gap: '15px' },
-    input: { width: '100%', padding: '8px', boxSizing: 'border-box' },
-    fieldset: { border: '1px solid #ccc', padding: '15px', borderRadius: '5px' },
+    input: { width: '100%', padding: '12px', boxSizing: 'border-box', borderRadius: '5px', border: '1px solid #ccc' },
+    fieldset: { border: '1px solid #eee', padding: '20px', borderRadius: '8px' },
     checkboxGroup: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' },
   };
 
   if (loading && isEditMode) return <p>Wczytywanie danych do edycji...</p>;
 
   return (
-    <div style={{ maxWidth: '700px', margin: '20px auto', padding: '20px' }}>
+    <div style={{ maxWidth: '700px', margin: '2rem auto', padding: '2rem' }}>
       <h1>{isEditMode ? 'Edytuj Swój Profil Food Trucka' : 'Utwórz Swój Profil Food Trucka'}</h1>
       <p>Uzupełnij poniższe informacje, aby organizatorzy mogli Cię znaleźć.</p>
       
@@ -158,14 +155,13 @@ function CreateProfilePage() {
         <fieldset style={styles.fieldset}>
           <legend>Podstawowe informacje</legend>
           <input value={foodTruckName} onChange={(e) => setFoodTruckName(e.target.value)} placeholder="Nazwa Twojego food trucka" required style={styles.input} />
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Krótki opis, czym się wyróżniacie..." required style={{...styles.input, minHeight: '100px', marginTop: '10px'}} />
-          <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Adres strony internetowej (opcjonalnie)" style={{...styles.input, marginTop: '10px'}} />
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Krótki opis, czym się wyróżniacie..." required style={{...styles.input, minHeight: '100px', marginTop: '15px'}} />
         </fieldset>
 
         <fieldset style={styles.fieldset}>
           <legend>Obszar działania</legend>
           <input value={baseLocation} onChange={(e) => setBaseLocation(e.target.value)} placeholder="Główna lokalizacja (np. Warszawa)" required style={styles.input} />
-          <input type="number" value={operationRadius} onChange={(e) => setOperationRadius(e.target.value)} placeholder="Promień działania w km (np. 100)" required style={{...styles.input, marginTop: '10px'}} />
+          <input type="number" value={operationRadius} onChange={(e) => setOperationRadius(e.target.value)} placeholder="Promień działania w km (np. 100)" required style={{...styles.input, marginTop: '15px'}} />
         </fieldset>
 
         <fieldset style={styles.fieldset}>
@@ -192,7 +188,7 @@ function CreateProfilePage() {
 
         <fieldset style={styles.fieldset}>
             <legend>Opcje dodatkowe</legend>
-            <label>
+            <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
                 <input 
                     type="checkbox" 
                     checked={longTermRental} 
@@ -204,13 +200,13 @@ function CreateProfilePage() {
         
         <fieldset style={styles.fieldset}>
             <legend>Galeria Zdjęć (max 10)</legend>
-            <p>Uwaga: ponowne dodanie zdjęć w trybie edycji zastąpi istniejącą galerię.</p>
+            <p>Zdjęcia zostaną automatycznie skompresowane. Uwaga: ponowne dodanie zdjęć w trybie edycji zastąpi istniejącą galerię.</p>
             <input type="file" multiple accept="image/*" onChange={handlePhotoChange} style={styles.input} />
         </fieldset>
 
         {message && <p style={{ color: message.startsWith('Profil') || message.startsWith('Gotowe') ? 'green' : 'red', textAlign: 'center' }}>{message}</p>}
 
-        <button type="submit" disabled={loading} style={{ padding: '15px', fontSize: '16px', fontWeight: 'bold' }}>
+        <button type="submit" disabled={loading} style={{ padding: '15px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', border: 'none', borderRadius: '5px', backgroundColor: 'var(--primary-red)', color: 'white' }}>
           {loading ? 'Przetwarzanie...' : (isEditMode ? 'Zapisz zmiany' : 'Utwórz profil')}
         </button>
       </form>
