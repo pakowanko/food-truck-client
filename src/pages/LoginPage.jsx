@@ -17,28 +17,18 @@ function LoginPage() {
     event.preventDefault();
     setLoading(true);
     setMessage('');
-
     try {
       const loginPayload = { email, password };
       const response = await api.post('/auth/login', loginPayload);
-      const data = response.data; // Odpowiedź z serwera, zawiera teraz pole 'role'
-
-      // ---- POCZĄTEK ZMIAN ----
-
-      // 1. Zapisujemy w kontekście PEŁNE dane użytkownika (wraz z rolą)
+      const data = response.data;
       login(data, data.token);
       
-      // 2. Sprawdzamy rolę i decydujemy, gdzie przekierować
       if (data.role === 'admin') {
         navigate('/admin', { replace: true });
       } else {
-        // Dla zwykłych użytkowników zachowujemy poprzednią logikę
         const from = location.state?.from?.pathname || "/dashboard";
         navigate(from, { replace: true });
       }
-      
-      // ---- KONIEC ZMIAN ----
-
     } catch (error) {
       setLoading(false);
       setMessage(error.response?.data?.message || 'Błąd sieci lub serwera.');
@@ -56,7 +46,11 @@ function LoginPage() {
         </button>
       </form>
       {message && <p style={{ color: 'red', textAlign: 'center', marginTop: '15px' }}>{message}</p>}
-      <p style={{ marginTop: '20px', textAlign: 'center' }}>Nie masz konta? <Link to="/register">Zarejestruj się</Link></p>
+
+      <div style={{marginTop: '20px', textAlign: 'center', display: 'flex', justifyContent: 'space-between'}}>
+        <Link to="/request-password-reset">Zapomniałem hasła</Link>
+        <Link to="/register">Nie masz konta? Zarejestruj się</Link>
+      </div>
     </div>
   );
 }

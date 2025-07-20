@@ -23,6 +23,8 @@ import ChatLayout from './pages/ChatLayout.jsx';
 import ConversationView from './pages/ConversationView.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import MyAccountPage from './pages/MyAccountPage.jsx';
+import RequestPasswordResetPage from './pages/RequestPasswordResetPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 
 // Komponent pomocniczy do zarządzania powiadomieniami wewnątrz Routera
 const NotificationManager = () => {
@@ -44,6 +46,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/request-password-reset" element={<RequestPasswordResetPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/profile/:profileId" element={<TruckDetailsPage />} />
             <Route path="/regulamin" element={<TermsPage />} />
             <Route path="/polityka-prywatnosci" element={<PrivacyPolicyPage />} />
