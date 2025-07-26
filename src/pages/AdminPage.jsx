@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from 'react';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
 
-// Komponent Modala do edycji użytkownika (bez zmian)
 const EditUserModal = ({ user, onClose, onSave }) => {
     const [formData, setFormData] = useState(user);
 
@@ -51,7 +50,6 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     );
 };
 
-// Nowy komponent Modala do podglądu rozmowy
 const ConversationModal = ({ conversation, onClose }) => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -91,6 +89,61 @@ const ConversationModal = ({ conversation, onClose }) => {
     );
 };
 
+const ManageProfilesModal = ({ user, onClose }) => {
+    const [profiles, setProfiles] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchProfiles = async () => {
+        setLoading(true);
+        try {
+            const { data } = await api.get(`/admin/users/${user.user_id}/profiles`);
+            setProfiles(data);
+        } catch (error) {
+            console.error("Błąd pobierania profili", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProfiles();
+    }, [user.user_id]);
+
+    const handleDeleteProfile = async (profileId) => {
+        if (window.confirm("Czy na pewno chcesz usunąć ten profil food trucka? Tej operacji nie można cofnąć.")) {
+            try {
+                await api.delete(`/admin/profiles/${profileId}`);
+                fetchProfiles();
+            } catch (error) {
+                alert("Nie udało się usunąć profilu.");
+            }
+        }
+    };
+
+    return (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+            <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+                <h2 style={{marginTop: 0}}>Zarządzaj profilami: {user.email}</h2>
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                    {loading ? <p>Wczytywanie profili...</p> : (
+                        <ul style={{listStyle: 'none', padding: 0}}>
+                            {profiles.length > 0 ? profiles.map(p => (
+                                <li key={p.profile_id} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee'}}>
+                                    <span>{p.food_truck_name} (ID: {p.profile_id})</span>
+                                    <button onClick={() => handleDeleteProfile(p.profile_id)} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
+                                </li>
+                            )) : <p>Ten użytkownik nie ma jeszcze żadnych profili.</p>}
+                        </ul>
+                    )}
+                </div>
+                <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button type="button" onClick={onClose}>Zamknij</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 function AdminPage() {
     const { user } = useContext(AuthContext);
@@ -103,6 +156,7 @@ function AdminPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [viewingConversation, setViewingConversation] = useState(null);
+    const [managingUser, setManagingUser] = useState(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -202,6 +256,7 @@ function AdminPage() {
         <>
             {isEditModalOpen && <EditUserModal user={editingUser} onClose={() => setIsEditModalOpen(false)} onSave={handleUserUpdate} />}
             {viewingConversation && <ConversationModal conversation={viewingConversation} onClose={() => setViewingConversation(null)} />}
+            {managingUser && <ManageProfilesModal user={managingUser} onClose={() => setManagingUser(null)} />}
 
             <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
                 <h1>Panel Administratora</h1>
@@ -223,6 +278,7 @@ function AdminPage() {
                             <th style={{ textAlign: 'left', padding: '8px' }}>Email</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Typ konta</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Status</th>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>Liczba profili</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
                         </tr>
                     </thead>
@@ -235,10 +291,16 @@ function AdminPage() {
                                     {u.role === 'admin' ? <strong>Admin</strong> : (userTypeMap[u.user_type] || u.user_type)}
                                 </td>
                                 <td style={{ padding: '8px', color: u.is_blocked ? 'red' : 'green' }}>{u.is_blocked ? 'Zablokowany' : 'Aktywny'}</td>
-                                <td style={{ padding: '8px', display: 'flex', gap: '10px' }}>
+                                <td style={{ padding: '8px', textAlign: 'center' }}>
+                                    {u.user_type === 'food_truck_owner' ? u.profile_count : 'N/A'}
+                                </td>
+                                <td style={{ padding: '8px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                     <button onClick={() => handleToggleBlock(u.user_id)} disabled={u.user_id === user.userId}>{u.is_blocked ? 'Odblokuj' : 'Zablokuj'}</button>
                                     <button onClick={() => openEditModal(u)}>Edytuj</button>
                                     <button onClick={() => handleDeleteUser(u.user_id)} disabled={u.user_id === user.userId} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
+                                    {u.user_type === 'food_truck_owner' && (
+                                        <button onClick={() => setManagingUser(u)}>Zarządzaj profilami</button>
+                                    )}
                                 </td>
                             </tr>
                         ))}
