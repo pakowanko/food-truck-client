@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
 
+// Komponent Modala do edycji użytkownika (bez zmian)
 const EditUserModal = ({ user, onClose, onSave }) => {
     const [formData, setFormData] = useState(user);
 
@@ -31,7 +32,6 @@ const EditUserModal = ({ user, onClose, onSave }) => {
                     <label style={{display: 'block', marginTop: '15px'}}>NIP:</label>
                     <input name="nip" value={formData.nip || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
                     
-                    {/* --- NOWE POLA ADRESOWE --- */}
                     <label style={{display: 'block', marginTop: '15px'}}>Ulica i numer:</label>
                     <input name="street_address" value={formData.street_address || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
 
@@ -40,7 +40,6 @@ const EditUserModal = ({ user, onClose, onSave }) => {
 
                     <label style={{display: 'block', marginTop: '15px'}}>Miasto:</label>
                     <input name="city" value={formData.city || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-                    {/* --- KONIEC NOWYCH PÓL --- */}
 
                     <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                         <button type="button" onClick={onClose}>Anuluj</button>
@@ -52,28 +51,72 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     );
 };
 
+// Nowy komponent Modala do podglądu rozmowy
+const ConversationModal = ({ conversation, onClose }) => {
+    const [messages, setMessages] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchMessages = async () => {
+            try {
+                const { data } = await api.get(`/admin/conversations/${conversation.conversation_id}/messages`);
+                setMessages(data);
+            } catch (error) {
+                console.error("Błąd pobierania wiadomości", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchMessages();
+    }, [conversation.conversation_id]);
+
+    return (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+            <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '600px', height: '80vh', display: 'flex', flexDirection: 'column' }}>
+                <h2 style={{marginTop: 0}}>Podgląd rozmowy: {conversation.title}</h2>
+                <div style={{ flex: 1, overflowY: 'auto', border: '1px solid #eee', padding: '10px', borderRadius: '5px' }}>
+                    {loading ? <p>Wczytywanie wiadomości...</p> : messages.map(msg => (
+                        <div key={msg.message_id} style={{ marginBottom: '15px', borderBottom: '1px solid #f0f0f0', paddingBottom: '10px' }}>
+                            <strong style={{color: 'var(--primary-red)'}}>{msg.sender_email}:</strong>
+                            <p style={{ margin: '5px 0' }}>{msg.message_content}</p>
+                            <small style={{color: '#888'}}>{new Date(msg.created_at).toLocaleString()}</small>
+                        </div>
+                    ))}
+                </div>
+                <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button type="button" onClick={onClose}>Zamknij</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 function AdminPage() {
     const { user } = useContext(AuthContext);
     const [users, setUsers] = useState([]);
     const [bookings, setBookings] = useState([]);
+    const [conversations, setConversations] = useState([]);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
+    const [viewingConversation, setViewingConversation] = useState(null);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [usersRes, bookingsRes, statsRes] = await Promise.all([
+            const [usersRes, bookingsRes, statsRes, convosRes] = await Promise.all([
                 api.get('/admin/users'),
                 api.get('/admin/bookings'),
-                api.get('/admin/stats')
+                api.get('/admin/stats'),
+                api.get('/admin/conversations')
             ]);
             setUsers(usersRes.data);
             setBookings(bookingsRes.data);
             setStats(statsRes.data);
+            setConversations(convosRes.data);
         } catch (err) {
             setError('Nie udało się pobrać danych.');
         } finally {
@@ -143,6 +186,11 @@ function AdminPage() {
         }
     };
 
+    const userTypeMap = {
+        organizer: 'Organizator',
+        food_truck_owner: 'Właściciel'
+    };
+
     const statCardStyle = { flex: 1, padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', textAlign: 'center', minWidth: '200px' };
     const statValueStyle = { fontSize: '2rem', fontWeight: 'bold' };
     const statLabelStyle = { fontSize: '1rem', color: '#6c757d' };
@@ -153,6 +201,7 @@ function AdminPage() {
     return (
         <>
             {isEditModalOpen && <EditUserModal user={editingUser} onClose={() => setIsEditModalOpen(false)} onSave={handleUserUpdate} />}
+            {viewingConversation && <ConversationModal conversation={viewingConversation} onClose={() => setViewingConversation(null)} />}
 
             <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
                 <h1>Panel Administratora</h1>
@@ -172,7 +221,7 @@ function AdminPage() {
                         <tr style={{ borderBottom: '2px solid black' }}>
                             <th style={{ textAlign: 'left', padding: '8px' }}>ID</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Email</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Rola</th>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>Typ konta</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Status</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
                         </tr>
@@ -182,7 +231,9 @@ function AdminPage() {
                             <tr key={u.user_id} style={{ borderBottom: '1px solid #ccc' }}>
                                 <td style={{ padding: '8px' }}>{u.user_id}</td>
                                 <td style={{ padding: '8px' }}>{u.email}</td>
-                                <td style={{ padding: '8px' }}>{u.role}</td>
+                                <td style={{ padding: '8px' }}>
+                                    {u.role === 'admin' ? <strong>Admin</strong> : (userTypeMap[u.user_type] || u.user_type)}
+                                </td>
                                 <td style={{ padding: '8px', color: u.is_blocked ? 'red' : 'green' }}>{u.is_blocked ? 'Zablokowany' : 'Aktywny'}</td>
                                 <td style={{ padding: '8px', display: 'flex', gap: '10px' }}>
                                     <button onClick={() => handleToggleBlock(u.user_id)} disabled={u.user_id === user.userId}>{u.is_blocked ? 'Odblokuj' : 'Zablokuj'}</button>
@@ -217,6 +268,32 @@ function AdminPage() {
                                  <td style={{ padding: '8px', display: 'flex', gap: '10px' }}>
                                     <button onClick={() => handleCommissionStatusChange(booking.request_id, booking.commission_paid)}>Prowizja</button>
                                     <button onClick={() => handlePackagingStatusChange(booking.request_id, booking.packaging_ordered)}>Opakowania</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                <h2 style={{marginTop: '40px'}}>Rozmowy</h2>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ borderBottom: '2px solid black' }}>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>ID</th>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>Tytuł</th>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>Uczestnicy</th>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {conversations.map(convo => (
+                            <tr key={convo.conversation_id} style={{ borderBottom: '1px solid #ccc' }}>
+                                <td style={{ padding: '8px' }}>{convo.conversation_id}</td>
+                                <td style={{ padding: '8px' }}>{convo.title}</td>
+                                <td style={{ padding: '8px' }}>{convo.participant1_email} <br/> {convo.participant2_email}</td>
+                                <td style={{ padding: '8px' }}>
+                                    <button onClick={() => setViewingConversation(convo)}>
+                                        Podgląd
+                                    </button>
                                 </td>
                             </tr>
                         ))}
