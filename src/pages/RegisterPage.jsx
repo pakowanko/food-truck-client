@@ -45,29 +45,6 @@ function RegisterPage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleFetchGusData = async () => {
-        if (!formData.nip) {
-            setError('Wpisz numer NIP, aby pobrać dane.');
-            return;
-        }
-        setLoading(true);
-        setError('');
-        setMessage('Pobieranie danych z GUS...');
-        try {
-            const { data } = await api.get(`/gus/company-data/${formData.nip}`);
-            setFormData({ ...formData, company_name: data.company_name });
-            setStreetAddress(data.street_address);
-            setPostalCode(data.postal_code);
-            setCity(data.city);
-            setMessage('Dane pobrane pomyślnie!');
-        } catch (err) {
-            setError(err.response?.data?.message || 'Nie udało się pobrać danych z GUS.');
-            setMessage('');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -172,10 +149,7 @@ function RegisterPage() {
                         <div style={formRowStyle}><label htmlFor="company_name" style={labelStyle}>Nazwa firmy / działalności</label><input id="company_name" type="text" name="company_name" value={formData.company_name} onChange={handleChange} required={userType === 'food_truck_owner'} style={inputStyle} /></div>
                         <div style={formRowStyle}>
                             <label htmlFor="nip" style={labelStyle}>NIP</label>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <input id="nip" type="text" name="nip" value={formData.nip} onChange={handleChange} required={userType === 'food_truck_owner'} style={{ ...inputStyle, flex: 1 }}/>
-                                <button type="button" onClick={handleFetchGusData} disabled={loading} style={{ ...inputStyle, flex: '0 0 auto', width: 'auto', backgroundColor: '#e9ecef', cursor: 'pointer' }}>{loading ? '...' : 'Pobierz dane z GUS'}</button>
-                            </div>
+                            <input id="nip" type="text" name="nip" value={formData.nip} onChange={handleChange} required={userType === 'food_truck_owner'} style={inputStyle} />
                         </div>
                         <div style={formRowStyle}><label htmlFor="streetAddress" style={labelStyle}>Ulica i numer</label><input id="streetAddress" type="text" value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} required={userType === 'food_truck_owner'} style={inputStyle} /></div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', ...formRowStyle }}>
