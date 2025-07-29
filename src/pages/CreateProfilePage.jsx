@@ -5,7 +5,11 @@ import { api } from '../apiConfig.js';
 import imageCompression from 'browser-image-compression';
 
 const offerOptions = {
-  dishes: ["Burgery", "Pizza", "Zapiekanki", "Hot-dogi", "Frytki belgijskie", "Nachos", "Kuchnia polska", "Kuchnia azjatycka", "Kuchnia meksykańska", "Lody", "Gofry", "Churros", "Słodkie wypieki"],
+  dishes: [
+    "Burgery", "Churros", "Frytki belgijskie", "Gofry", "Granita", "Hot-dogi", 
+    "Kebab", "Kuchnia azjatycka", "Kuchnia meksykańska", "Kuchnia polska", 
+    "Lody", "Nachos", "Pizza", "Słodkie wypieki", "Zakręcony ziemniak", "Zapiekanki"
+  ],
   drinks: ["Kawa", "Lemoniada", "Napoje bezalkoholowe", "Piwo kraftowe"],
   dietary: ["Opcje wegetariańskie", "Opcje wegańskie", "Opcje bezglutenowe"]
 };

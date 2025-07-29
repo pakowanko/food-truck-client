@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import TruckCard from '../components/TruckCard.jsx';
 import { api } from '../apiConfig.js';
 
+// Zaktualizowana i posortowana lista, zgodna z formularzem tworzenia profilu
 const ALL_CUISINES = [
-  "Burgery", "Pizza", "Zapiekanki", "Hot-dogi", "Frytki belgijskie", "Nachos", "Kuchnia polska", "Kuchnia azjatycka", "Kuchnia meksykańska", "Lody", "Gofry", "Churros", "Słodkie wypieki", "Kawa", "Lemoniada", "Napoje bezalkoholowe", "Piwo kraftowe"
+  "Burgery", "Churros", "Frytki belgijskie", "Gofry", "Granita", "Hot-dogi", 
+  "Kebab", "Kuchnia azjatycka", "Kuchnia meksykańska", "Kuchnia polska", 
+  "Lody", "Nachos", "Pizza", "Słodkie wypieki", "Zakręcony ziemniak", "Zapiekanki"
 ];
 
 function HomePage() {
