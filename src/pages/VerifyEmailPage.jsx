@@ -3,8 +3,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
 
-// Przenosimy funkcje pomocnicze poza komponent, aby nie były tworzone przy każdym renderze.
-// Otrzymują wszystko, czego potrzebują, jako argumenty.
+// Funkcje pomocnicze przeniesione poza komponent dla czystości kodu
 const handleInitialVerification = async (token, setStatus, setMessage, login, navigate) => {
   setStatus('verifying');
   setMessage('Trwa weryfikacja Twojego konta...');
@@ -62,12 +61,13 @@ function VerifyEmailPage() {
   const [status, setStatus] = useState('verifying');
   const [message, setMessage] = useState('Przetwarzanie Twojego żądania...');
 
+  // Kluczowy element: Ref, który będzie śledził, czy efekt już się uruchomił.
   const effectRan = useRef(false);
 
   useEffect(() => {
-    // Ten warunek jest kluczowy dla React Strict Mode w trybie deweloperskim.
-    // Zapobiega podwójnemu wykonaniu logiki, która powinna być uruchomiona tylko raz (jak weryfikacja jednorazowego tokena).
-    if (effectRan.current === true) {
+    // W trybie deweloperskim, ten warunek zatrzyma drugie, niechciane uruchomienie.
+    // W trybie produkcyjnym, ten warunek nigdy nie będzie prawdziwy, więc nie ma wpływu na działanie.
+    if (effectRan.current === true && process.env.NODE_ENV === 'development') {
       return;
     }
 
@@ -83,14 +83,11 @@ function VerifyEmailPage() {
       setMessage('Brak wymaganego tokena w adresie URL.');
     }
     
-    // Funkcja czyszcząca `useEffect`. Uruchamia się, gdy komponent jest "odmontowywany".
-    // W Strict Mode, React od razu odmontowuje i montuje komponent ponownie,
-    // więc ta funkcja ustawi flagę `effectRan` na `true` przed drugim uruchomieniem efektu.
+    // Ustawiamy flagę na true po pierwszym uruchomieniu.
     return () => {
       effectRan.current = true;
     };
-    // Zależności zapewniają, że efekt uruchomi się ponownie tylko, jeśli zmieni się któraś z tych wartości.
-  }, [searchParams, navigate, login]);
+  }, []); // Pusta tablica zależności, aby efekt uruchomił się tylko raz przy montowaniu komponentu.
 
   return (
     <div style={{ textAlign: 'center', padding: '50px', maxWidth: '600px', margin: '2rem auto', border: '1px solid #eee', borderRadius: '8px' }}>
