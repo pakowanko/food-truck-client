@@ -26,9 +26,6 @@ import AdminPage from './pages/AdminPage.jsx';
 import MyAccountPage from './pages/MyAccountPage.jsx';
 import RequestPasswordResetPage from './pages/RequestPasswordResetPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
-// --- NOWE IMPORTY ---
-import VerifyLoginPage from './pages/VerifyLoginPage.jsx';
-import VerificationResultPage from './pages/VerificationResultPage.jsx';
 
 
 const GOOGLE_CLIENT_ID = '1035693089076-606q1auo4o0cb62lmj21djqeqjvor4pj.apps.googleusercontent.com';

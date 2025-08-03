@@ -9,41 +9,30 @@ function VerifyEmailPage() {
   const { login } = useContext(AuthContext);
   
   const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
-  const [message, setMessage] = useState('Trwa weryfikacja Twojego konta...');
+  const [message, setMessage] = useState('Przetwarzanie Twojego żądania...');
 
   useEffect(() => {
     const verificationToken = searchParams.get('token');
+    const reminderToken = searchParams.get('reminder_token'); // Nasz nowy parametr
 
-    if (!verificationToken) {
-      setStatus('error');
-      setMessage('Brak tokena weryfikacyjnego w adresie URL.');
-      return;
-    }
-
-    const verifyAccount = async () => {
+    // Funkcja do obsługi weryfikacji po rejestracji
+    const handleInitialVerification = async () => {
+      setStatus('verifying');
+      setMessage('Trwa weryfikacja Twojego konta...');
       try {
-        // Frontend wysyła zapytanie do backendu, aby zweryfikować token
         const response = await api.get(`/auth/verify-email?token=${verificationToken}`);
-        
         const { success, token, redirect, message } = response.data;
 
         if (success && token) {
-          // Weryfikacja i auto-logowanie udane
           setStatus('success');
           setMessage(message + ' Za chwilę zostaniesz przekierowany...');
-          login(null, token); // Zapisujemy token w kontekście
-          setTimeout(() => {
-            navigate(redirect, { replace: true });
-          }, 2000); // Krótkie opóźnienie, aby użytkownik zobaczył komunikat
+          login(null, token);
+          setTimeout(() => navigate(redirect, { replace: true }), 2000);
         } else if (success && !token) {
-           // Konto było już aktywne, przekierowujemy do logowania
            setStatus('success');
            setMessage(message + ' Przekierowujemy do strony logowania...');
-           setTimeout(() => {
-            navigate(redirect, { replace: true });
-          }, 3000);
+           setTimeout(() => navigate(redirect, { replace: true }), 3000);
         } else {
-          // Weryfikacja nie powiodła się po stronie backendu
           setStatus('error');
           setMessage(message || 'Wystąpił nieoczekiwany błąd.');
         }
@@ -53,7 +42,26 @@ function VerifyEmailPage() {
       }
     };
 
-    verifyAccount();
+    // Funkcja do obsługi automatycznego logowania z przypomnienia
+    const handleReminderLogin = () => {
+        setStatus('verifying');
+        setMessage('Logowanie... Za chwilę zostaniesz przekierowany do tworzenia profilu.');
+        login(null, reminderToken);
+        setTimeout(() => {
+            navigate('/create-profile', { replace: true });
+        }, 2000); // Dajemy chwilę na przetworzenie logowania
+    };
+
+    // Sprawdzamy, który token otrzymaliśmy i uruchamiamy odpowiednią funkcję
+    if (reminderToken) {
+        handleReminderLogin();
+    } else if (verificationToken) {
+        handleInitialVerification();
+    } else {
+        setStatus('error');
+        setMessage('Brak wymaganego tokena w adresie URL.');
+    }
+
   }, [searchParams, navigate, login]);
 
   return (
