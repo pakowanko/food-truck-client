@@ -17,7 +17,7 @@ export function NotificationPopup({ notification, onClose }) {
         onClose();
     };
     return (
-        <div onClick={handleClick} style={{
+        <div style={{
             position: 'fixed', bottom: '20px', right: '20px', backgroundColor: 'white', 
             padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             zIndex: 2000, cursor: 'pointer', maxWidth: '320px', borderLeft: '5px solid var(--primary-red)'
@@ -30,12 +30,10 @@ export function NotificationPopup({ notification, onClose }) {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => {
-    const initialToken = localStorage.getItem('token');
-    console.log(`[AuthContext] Inicjalizacja. Token z localStorage: ${initialToken ? 'jest' : 'brak'}`);
-    return initialToken;
-  });
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
+  // Zaczynamy z loading: false. Aplikacja jest gotowa od razu.
+  // Stan ładowania będzie zarządzany tylko wewnątrz funkcji `login`.
+  const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
   const logout = useCallback(() => {
@@ -50,15 +48,14 @@ export const AuthProvider = ({ children }) => {
     delete api.defaults.headers.common['Authorization'];
   }, []);
 
+  // Funkcja login pozostaje asynchroniczna, ale kontekst nie wywołuje jej już sam.
   const login = useCallback(async (userToken) => {
     console.log('[AuthContext] Rozpoczęto funkcję login().');
     if (!userToken) {
-        console.log('[AuthContext] Brak tokena, wywołuję logout().');
         logout();
         return null;
     }
     
-    console.log('[AuthContext] Ustawiam loading na true.');
     setLoading(true);
     localStorage.setItem('token', userToken);
     api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
@@ -69,35 +66,23 @@ export const AuthProvider = ({ children }) => {
         const userData = response.data;
         console.log('[AuthContext] Sukces! Otrzymano dane użytkownika:', userData);
         
-        console.log('[AuthContext] Ustawiam stany: user, token, loading.');
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         setToken(userToken); 
         setLoading(false);
-        console.log('[AuthContext] Funkcja login() zakończona pomyślnie.');
         return userData;
     } catch (error) {
         console.error("[AuthContext] Błąd w login(), wylogowywanie.", error);
         logout();
         setLoading(false);
-        console.log('[AuthContext] Funkcja login() zakończona błędem.');
         return null;
     }
   }, [logout]);
 
-  useEffect(() => {
-    console.log('[AuthContext] Uruchomiono useEffect do inicjalizacji sesji.');
-    const initialToken = localStorage.getItem('token');
-    if (initialToken) {
-      console.log('[AuthContext] Znaleziono token inicjalizacyjny, wywołuję login().');
-      login(initialToken);
-    } else {
-      console.log('[AuthContext] Brak tokena inicjalizacyjnego, ustawiam loading na false.');
-      setLoading(false);
-    }
-    // Pusta tablica zależności [] jest kluczowa, aby ten efekt uruchomił się tylko raz.
-  }, []); 
+  // Usunęliśmy useEffect, który próbował logować przy starcie aplikacji.
+  // To eliminuje stan wyścigu.
 
+  // useEffect dla socket.io pozostaje bez zmian.
   useEffect(() => {
     console.log(`[AuthContext] Uruchomiono useEffect dla socket.io. Stan: user=${user ? user.userId : 'null'}, loading=${loading}`);
     if (user && !loading) {
@@ -113,7 +98,6 @@ export const AuthProvider = ({ children }) => {
         
         socket.on('connect', onConnect);
         socket.on('new_message_notification', (data) => {
-            console.log('[AuthContext] Otrzymano powiadomienie o nowej wiadomości:', data);
             setNotification(data);
             setTimeout(() => setNotification(null), 8000);
         });
@@ -137,7 +121,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {loading ? <p style={{textAlign: 'center', marginTop: '50px', fontSize: '1.2rem'}}>Ładowanie aplikacji...</p> : children}
+      {children}
     </AuthContext.Provider>
   );
 };
