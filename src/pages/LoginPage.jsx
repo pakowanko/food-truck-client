@@ -22,8 +22,12 @@ function LoginPage() {
       const loginPayload = { email, password };
       const response = await api.post('/auth/login', loginPayload);
       const data = response.data;
-      login(data, data.token);
       
+      // --- POPRAWKA ---
+      // Przekazujemy tylko token, zgodnie z nową logiką AuthContext
+      login(data.token); 
+      
+      // Nawigacja po zalogowaniu pozostaje bez zmian
       if (data.role === 'admin') {
         navigate('/admin', { replace: true });
       } else {
@@ -42,7 +46,10 @@ function LoginPage() {
     try {
         const response = await api.post('/auth/google-login', { credential: credentialResponse.credential });
         const data = response.data;
-        login(data, data.token);
+        
+        // --- POPRAWKA ---
+        // Tutaj również przekazujemy tylko token
+        login(data.token);
 
         if (data.role === 'admin') {
             navigate('/admin', { replace: true });
@@ -60,6 +67,7 @@ function LoginPage() {
     setMessage('Logowanie przez Google nie powiodło się. Spróbuj ponownie.');
   };
 
+  // Reszta komponentu (JSX) pozostaje bez zmian
   return (
     <div style={{ maxWidth: '450px', margin: '50px auto', padding: '30px', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
       <h2 style={{ textAlign: 'center' }}>Zaloguj się</h2>
