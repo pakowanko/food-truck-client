@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useMemo, useCallback } from 
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { api, SOCKET_URL } from './apiConfig.js';
+import { jwtDecode } from 'jwt-decode'; // <-- NOWY IMPORT
 
 const socket = io(SOCKET_URL, { 
     autoConnect: false,
@@ -98,24 +99,31 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user, loading]);
 
+  // --- ZAKTUALIZOWANA FUNKCJA LOGIN ---
   const login = (userData, userToken) => {
     localStorage.setItem('token', userToken);
     api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
     
-    if (userData) {
-      // Dla normalnego logowania, ustawiamy użytkownika od razu dla lepszego UX
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-    } else {
-      // --- KLUCZOWA ZMIANA ---
-      // Dla logowania z linku (bez danych użytkownika), czyścimy stare dane
-      // i ustawiamy stan ładowania na 'true'. To zmusi ProtectedRoute do poczekania.
-      setUser(null);
-      setLoading(true);
+    let finalUserData = userData;
+    // Jeśli nie mamy danych użytkownika, próbujemy je zdekodować z tokena
+    if (!finalUserData && userToken) {
+        try {
+            finalUserData = jwtDecode(userToken);
+        } catch (e) {
+            console.error("Nie udało się zdekodować tokena", e);
+            logout(); // Jeśli token jest zły, od razu wylogowujemy
+            return;
+        }
+    }
+
+    if (finalUserData) {
+        setUser(finalUserData);
+        localStorage.setItem('user', JSON.stringify(finalUserData));
     }
     
-    // Ustawienie tokena uruchomi useEffect, który pobierze nowy profil użytkownika
     setToken(userToken);
+    // Ustawiamy loading na false, bo mamy już dane użytkownika i nie musimy czekać na API
+    setLoading(false); 
   };
 
   const value = useMemo(() => ({
@@ -124,8 +132,6 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {/* Zmieniono z {!loading && children} na {children}, aby uniknąć problemów z odświeżaniem.
-          Stan ładowania jest teraz poprawnie obsługiwany w ProtectedRoute. */}
       {children}
     </AuthContext.Provider>
   );
