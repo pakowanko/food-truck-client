@@ -26,6 +26,10 @@ import AdminPage from './pages/AdminPage.jsx';
 import MyAccountPage from './pages/MyAccountPage.jsx';
 import RequestPasswordResetPage from './pages/RequestPasswordResetPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
+// --- NOWE IMPORTY ---
+import VerifyLoginPage from './pages/VerifyLoginPage.jsx';
+import VerificationResultPage from './pages/VerificationResultPage.jsx';
+
 
 const GOOGLE_CLIENT_ID = '1035693089076-606q1auo4o0cb62lmj21djqeqjvor4pj.apps.googleusercontent.com';
 
@@ -55,6 +59,11 @@ function App() {
               <Route path="/profile/:profileId" element={<TruckDetailsPage />} />
               <Route path="/regulamin" element={<TermsPage />} />
               <Route path="/polityka-prywatnosci" element={<PrivacyPolicyPage />} />
+
+              {/* --- NOWE TRASY DO OBSŁUGI WERYFIKACJI --- */}
+              <Route path="/verify-login" element={<VerifyLoginPage />} />
+              <Route path="/verification-result" element={<VerificationResultPage />} />
+
 
               {/* Trasy chronione */}
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
