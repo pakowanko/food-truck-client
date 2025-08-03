@@ -105,7 +105,8 @@ export const AuthProvider = ({ children }) => {
     api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
     
     let finalUserData = userData;
-    // Jeśli nie mamy danych użytkownika, próbujemy je zdekodować z tokena
+    // Jeśli nie mamy danych użytkownika (np. przy logowaniu z linku),
+    // dekodujemy je bezpośrednio z tokena.
     if (!finalUserData && userToken) {
         try {
             finalUserData = jwtDecode(userToken);
@@ -122,7 +123,8 @@ export const AuthProvider = ({ children }) => {
     }
     
     setToken(userToken);
-    // Ustawiamy loading na false, bo mamy już dane użytkownika i nie musimy czekać na API
+    // Ustawiamy loading na false, bo mamy już dane użytkownika i nie musimy czekać na API.
+    // To zapobiega "wyścigowi" z ProtectedRoute.
     setLoading(false); 
   };
 
