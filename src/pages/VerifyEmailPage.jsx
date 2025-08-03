@@ -16,7 +16,7 @@ const handleInitialVerification = async (token, setStatus, setMessage, login, na
       setStatus('success');
       setMessage(responseMessage + ' Za chwilę zostaniesz przekierowany...');
       
-      // Czekamy na pełne zakończenie procesu logowania
+      // --- KLUCZOWA ZMIANA: Czekamy na pełne zakończenie procesu logowania ---
       const loggedInUser = await login(jwtToken);
       
       // Przekierowujemy dopiero, gdy mamy pewność, że użytkownik jest zalogowany
@@ -52,7 +52,7 @@ const handleReminderLogin = async (token, setStatus, setMessage, login, navigate
       setStatus('success');
       setMessage(responseMessage + ' Przekierowujemy...');
       
-      // Czekamy na pełne zakończenie procesu logowania
+      // --- KLUCZOWA ZMIANA: Czekamy na pełne zakończenie procesu logowania ---
       const loggedInUser = await login(newJwtToken);
 
       if (loggedInUser) {
@@ -121,4 +121,3 @@ function VerifyEmailPage() {
 }
 
 export default VerifyEmailPage;
-

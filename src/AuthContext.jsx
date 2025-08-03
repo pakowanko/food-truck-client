@@ -10,7 +10,6 @@ const socket = io(SOCKET_URL, {
 
 export const AuthContext = createContext(null);
 
-// Komponent NotificationPopup bez zmian
 export function NotificationPopup({ notification, onClose }) {
     const navigate = useNavigate();
     const handleClick = () => {
@@ -46,13 +45,12 @@ export const AuthProvider = ({ children }) => {
     delete api.defaults.headers.common['Authorization'];
   }, []);
 
-  // --- ULEPSZONA FUNKCJA LOGIN ---
-  // Teraz jest asynchroniczna i zwraca dane użytkownika lub null.
-  // Gwarantuje, że proces logowania (ustawienie tokena + pobranie profilu) jest atomowy.
+  // --- KLUCZOWA ZMIANA: Funkcja login jest teraz asynchroniczna ---
+  // Gwarantuje, że proces logowania jest "atomowy" - kończy się dopiero po pobraniu profilu.
   const login = useCallback(async (userToken) => {
     if (!userToken) {
         logout();
-        return null; // Zwracamy null, jeśli nie ma tokena
+        return null;
     }
     
     setLoading(true);
@@ -64,41 +62,42 @@ export const AuthProvider = ({ children }) => {
         const userData = response.data;
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+        setToken(userToken); // Ustawiamy token w stanie dopiero po sukcesie
         setLoading(false);
-        return userData; // Zwracamy dane użytkownika po udanym logowaniu
+        return userData; // Zwracamy dane użytkownika, aby inne komponenty wiedziały, że się udało
     } catch (error) {
-        console.error("Token nieważny lub wystąpił błąd, wylogowywanie.", error);
-        logout(); // W razie błędu czyścimy wszystko
+        console.error("Błąd podczas logowania lub pobierania profilu, wylogowywanie.", error);
+        logout();
         setLoading(false);
         return null; // Zwracamy null w przypadku błędu
     }
   }, [logout]);
 
-  // useEffect do inicjalizacji sesji przy pierwszym załadowaniu aplikacji
+  // useEffect do inicjalizacji sesji przy pierwszym załadowaniu
   useEffect(() => {
     const initialToken = localStorage.getItem('token');
     if (initialToken) {
-      // Jeśli mamy token, próbujemy się zalogować, ale nie blokujemy renderowania
       login(initialToken);
     } else {
-      setLoading(false); // Jeśli nie ma tokena, kończymy ładowanie
+      setLoading(false);
     }
   }, [login]);
 
-  // useEffect do obsługi socket.io, bez zmian, ale teraz będzie działał poprawnie
+  // useEffect do obsługi socket.io - teraz będzie działał poprawnie
   useEffect(() => {
     const onNewMessage = (data) => {
         setNotification(data);
         setTimeout(() => setNotification(null), 8000);
     };
 
-    // Ten warunek jest teraz bezpieczny, bo `user` będzie ustawiony dopiero po pełnym zalogowaniu
+    // Ten warunek jest teraz w 100% bezpieczny
     if (user && !loading) {
         if (!socket.connected) {
             socket.connect();
         }
         
         const onConnect = () => {
+            // userId na pewno będzie istniało
             console.log('Połączono z globalnym socketem i rejestruję użytkownika:', user.userId);
             socket.emit('register_user', user.userId);
         };
