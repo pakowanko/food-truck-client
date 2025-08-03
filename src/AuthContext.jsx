@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false); // <-- NOWY STAN
 
   const logout = useCallback(() => {
     if (socket.connected) {
@@ -48,6 +49,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const validateToken = async () => {
+      // --- ZMIANA: Sprawdzamy, czy nie jesteśmy w trakcie logowania ---
+      if (isLoggingIn) {
+        setIsLoggingIn(false); // Resetujemy flagę
+        setLoading(false); // Kończymy ładowanie
+        return; // Przerywamy, aby uniknąć zbędnego zapytania API
+      }
+
       if (token) {
         try {
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -67,7 +75,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
     validateToken();
-  }, [token, logout]);
+  }, [token, logout, isLoggingIn]);
 
   useEffect(() => {
     const onNewMessage = (data) => {
@@ -105,14 +113,12 @@ export const AuthProvider = ({ children }) => {
     api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
     
     let finalUserData = userData;
-    // Jeśli nie mamy danych użytkownika (np. przy logowaniu z linku),
-    // dekodujemy je bezpośrednio z tokena.
     if (!finalUserData && userToken) {
         try {
             finalUserData = jwtDecode(userToken);
         } catch (e) {
             console.error("Nie udało się zdekodować tokena", e);
-            logout(); // Jeśli token jest zły, od razu wylogowujemy
+            logout();
             return;
         }
     }
@@ -122,10 +128,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(finalUserData));
     }
     
+    // --- ZMIANA: Ustawiamy flagę, że właśnie się logujemy ---
+    setIsLoggingIn(true); 
     setToken(userToken);
-    // Ustawiamy loading na false, bo mamy już dane użytkownika i nie musimy czekać na API.
-    // To zapobiega "wyścigowi" z ProtectedRoute.
-    setLoading(false); 
   };
 
   const value = useMemo(() => ({
