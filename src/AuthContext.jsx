@@ -30,11 +30,16 @@ export function NotificationPopup({ notification, onClose }) {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [token, setToken] = useState(() => {
+    const initialToken = localStorage.getItem('token');
+    console.log(`[AuthContext] Inicjalizacja. Token z localStorage: ${initialToken ? 'jest' : 'brak'}`);
+    return initialToken;
+  });
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
 
   const logout = useCallback(() => {
+    console.log('[AuthContext] Wylogowywanie...');
     if (socket.connected) {
         socket.disconnect();
     }
@@ -45,74 +50,84 @@ export const AuthProvider = ({ children }) => {
     delete api.defaults.headers.common['Authorization'];
   }, []);
 
-  // --- KLUCZOWA ZMIANA: Funkcja login jest teraz asynchroniczna ---
-  // Gwarantuje, że proces logowania jest "atomowy" - kończy się dopiero po pobraniu profilu.
   const login = useCallback(async (userToken) => {
+    console.log('[AuthContext] Rozpoczęto funkcję login().');
     if (!userToken) {
+        console.log('[AuthContext] Brak tokena, wywołuję logout().');
         logout();
         return null;
     }
     
+    console.log('[AuthContext] Ustawiam loading na true.');
     setLoading(true);
     localStorage.setItem('token', userToken);
     api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
     
     try {
+        console.log('[AuthContext] Próbuję pobrać /auth/profile...');
         const response = await api.get('/auth/profile');
         const userData = response.data;
+        console.log('[AuthContext] Sukces! Otrzymano dane użytkownika:', userData);
+        
+        console.log('[AuthContext] Ustawiam stany: user, token, loading.');
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
-        setToken(userToken); // Ustawiamy token w stanie dopiero po sukcesie
+        setToken(userToken); 
         setLoading(false);
-        return userData; // Zwracamy dane użytkownika, aby inne komponenty wiedziały, że się udało
+        console.log('[AuthContext] Funkcja login() zakończona pomyślnie.');
+        return userData;
     } catch (error) {
-        console.error("Błąd podczas logowania lub pobierania profilu, wylogowywanie.", error);
+        console.error("[AuthContext] Błąd w login(), wylogowywanie.", error);
         logout();
         setLoading(false);
-        return null; // Zwracamy null w przypadku błędu
+        console.log('[AuthContext] Funkcja login() zakończona błędem.');
+        return null;
     }
   }, [logout]);
 
-  // useEffect do inicjalizacji sesji przy pierwszym załadowaniu
   useEffect(() => {
+    console.log('[AuthContext] Uruchomiono useEffect do inicjalizacji sesji.');
     const initialToken = localStorage.getItem('token');
     if (initialToken) {
+      console.log('[AuthContext] Znaleziono token inicjalizacyjny, wywołuję login().');
       login(initialToken);
     } else {
+      console.log('[AuthContext] Brak tokena inicjalizacyjnego, ustawiam loading na false.');
       setLoading(false);
     }
-  }, [login]);
+    // Pusta tablica zależności [] jest kluczowa, aby ten efekt uruchomił się tylko raz.
+  }, []); 
 
-  // useEffect do obsługi socket.io - teraz będzie działał poprawnie
   useEffect(() => {
-    const onNewMessage = (data) => {
-        setNotification(data);
-        setTimeout(() => setNotification(null), 8000);
-    };
-
-    // Ten warunek jest teraz w 100% bezpieczny
+    console.log(`[AuthContext] Uruchomiono useEffect dla socket.io. Stan: user=${user ? user.userId : 'null'}, loading=${loading}`);
     if (user && !loading) {
         if (!socket.connected) {
+            console.log('[AuthContext] Socket.io - łączę...');
             socket.connect();
         }
         
         const onConnect = () => {
-            // userId na pewno będzie istniało
-            console.log('Połączono z globalnym socketem i rejestruję użytkownika:', user.userId);
+            console.log('[AuthContext] Socket połączony. Rejestruję użytkownika z ID:', user.userId);
             socket.emit('register_user', user.userId);
         };
         
         socket.on('connect', onConnect);
-        socket.on('new_message_notification', onNewMessage);
+        socket.on('new_message_notification', (data) => {
+            console.log('[AuthContext] Otrzymano powiadomienie o nowej wiadomości:', data);
+            setNotification(data);
+            setTimeout(() => setNotification(null), 8000);
+        });
 
         if (socket.connected) {
             onConnect();
         }
+    } else {
+        console.log('[AuthContext] Socket.io - warunki nie spełnione, nie łączę.');
     }
 
     return () => {
         socket.off('connect');
-        socket.off('new_message_notification', onNewMessage);
+        socket.off('new_message_notification');
     };
   }, [user, loading]);
 
@@ -122,7 +137,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? <p style={{textAlign: 'center', marginTop: '50px', fontSize: '1.2rem'}}>Ładowanie aplikacji...</p> : children}
     </AuthContext.Provider>
   );
 };
