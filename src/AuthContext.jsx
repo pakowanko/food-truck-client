@@ -52,6 +52,7 @@ export const AuthProvider = ({ children }) => {
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           const response = await api.get('/auth/profile');
           setUser(response.data);
+          localStorage.setItem('user', JSON.stringify(response.data));
         } catch (error) {
           console.error("Token nieważny, wylogowywanie.", error);
           logout();
@@ -60,6 +61,8 @@ export const AuthProvider = ({ children }) => {
         }
       } else {
         setLoading(false);
+        setUser(null);
+        localStorage.removeItem('user');
       }
     };
     validateToken();
@@ -97,10 +100,22 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData, userToken) => {
     localStorage.setItem('token', userToken);
-    localStorage.setItem('user', JSON.stringify(userData));
     api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
+    
+    if (userData) {
+      // Dla normalnego logowania, ustawiamy użytkownika od razu dla lepszego UX
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+    } else {
+      // --- KLUCZOWA ZMIANA ---
+      // Dla logowania z linku (bez danych użytkownika), czyścimy stare dane
+      // i ustawiamy stan ładowania na 'true'. To zmusi ProtectedRoute do poczekania.
+      setUser(null);
+      setLoading(true);
+    }
+    
+    // Ustawienie tokena uruchomi useEffect, który pobierze nowy profil użytkownika
     setToken(userToken);
-    setUser(userData);
   };
 
   const value = useMemo(() => ({
@@ -109,7 +124,9 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {/* Zmieniono z {!loading && children} na {children}, aby uniknąć problemów z odświeżaniem.
+          Stan ładowania jest teraz poprawnie obsługiwany w ProtectedRoute. */}
+      {children}
     </AuthContext.Provider>
   );
 };
