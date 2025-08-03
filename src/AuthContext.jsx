@@ -2,7 +2,6 @@ import React, { createContext, useState, useEffect, useMemo, useCallback } from 
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import { api, SOCKET_URL } from './apiConfig.js';
-import { jwtDecode } from 'jwt-decode'; // <-- NOWY IMPORT
 
 const socket = io(SOCKET_URL, { 
     autoConnect: false,
@@ -11,6 +10,7 @@ const socket = io(SOCKET_URL, {
 
 export const AuthContext = createContext(null);
 
+// Komponent NotificationPopup bez zmian
 export function NotificationPopup({ notification, onClose }) {
     const navigate = useNavigate();
     const handleClick = () => {
@@ -31,52 +31,53 @@ export function NotificationPopup({ notification, onClose }) {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  // Inicjalizujemy token z localStorage. To jest nasz "jedyny" punkt startowy.
   const [token, setToken] = useState(() => localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Zaczynamy z ładowaniem, dopóki nie zweryfikujemy tokena
   const [notification, setNotification] = useState(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false); // <-- NOWY STAN
 
+  // Funkcja logout jest teraz prostsza
   const logout = useCallback(() => {
     if (socket.connected) {
         socket.disconnect();
     }
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('user'); // Usuwamy też usera
     setToken(null);
     setUser(null);
     delete api.defaults.headers.common['Authorization'];
+    // Nie ma potrzeby nawigacji tutaj, komponenty same zareagują na zmianę `user` na `null`
   }, []);
 
+  // Główny useEffect do zarządzania sesją. Reaguje tylko na zmianę tokena.
   useEffect(() => {
     const validateToken = async () => {
-      // --- ZMIANA: Sprawdzamy, czy nie jesteśmy w trakcie logowania ---
-      if (isLoggingIn) {
-        setIsLoggingIn(false); // Resetujemy flagę
-        setLoading(false); // Kończymy ładowanie
-        return; // Przerywamy, aby uniknąć zbędnego zapytania API
-      }
-
       if (token) {
         try {
+          // Ustawiamy nagłówek od razu
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          // Zawsze pobieramy świeże dane profilu z serwera
           const response = await api.get('/auth/profile');
           setUser(response.data);
+          // Zapisujemy pełne dane użytkownika w localStorage dla szybszego startu przy odświeżeniu
           localStorage.setItem('user', JSON.stringify(response.data));
         } catch (error) {
-          console.error("Token nieważny, wylogowywanie.", error);
-          logout();
-        } finally {
-          setLoading(false);
+          console.error("Token nieważny lub wystąpił błąd, wylogowywanie.", error);
+          logout(); // Jeśli token jest zły, czyścimy wszystko
         }
       } else {
-        setLoading(false);
+        // Jeśli nie ma tokena, upewniamy się, że użytkownik jest wylogowany
         setUser(null);
         localStorage.removeItem('user');
       }
+      // Kończymy ładowanie dopiero po całej operacji
+      setLoading(false);
     };
-    validateToken();
-  }, [token, logout, isLoggingIn]);
 
+    validateToken();
+  }, [token, logout]); // Zależność tylko od `token` i `logout`
+
+  // useEffect do obsługi socket.io bez zmian
   useEffect(() => {
     const onNewMessage = (data) => {
         setNotification(data);
@@ -107,30 +108,12 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user, loading]);
 
-  // --- ZAKTUALIZOWANA FUNKCJA LOGIN ---
-  const login = (userData, userToken) => {
+  // Uproszczona funkcja login. Jej jedynym zadaniem jest ustawienie nowego tokena.
+  // Resztą zajmie się główny useEffect.
+  const login = (userToken) => {
+    setLoading(true); // Włączamy ładowanie na czas weryfikacji nowego tokena
     localStorage.setItem('token', userToken);
-    api.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
-    
-    let finalUserData = userData;
-    if (!finalUserData && userToken) {
-        try {
-            finalUserData = jwtDecode(userToken);
-        } catch (e) {
-            console.error("Nie udało się zdekodować tokena", e);
-            logout();
-            return;
-        }
-    }
-
-    if (finalUserData) {
-        setUser(finalUserData);
-        localStorage.setItem('user', JSON.stringify(finalUserData));
-    }
-    
-    // --- ZMIANA: Ustawiamy flagę, że właśnie się logujemy ---
-    setIsLoggingIn(true); 
-    setToken(userToken);
+    setToken(userToken); // To uruchomi główny useEffect, który zweryfikuje token i ustawi usera
   };
 
   const value = useMemo(() => ({
@@ -139,7 +122,8 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {/* Nie renderujemy dzieci dopóki trwa inicjalne ładowanie */}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
