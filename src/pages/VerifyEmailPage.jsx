@@ -3,7 +3,8 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
 
-// Funkcje pomocnicze przeniesione poza komponent dla czystości kodu
+// --- ZAKTUALIZOWANE FUNKCJE POMOCNICZE ---
+// Teraz są asynchroniczne i używają nowej, asynchronicznej funkcji `login`
 const handleInitialVerification = async (token, setStatus, setMessage, login, navigate) => {
   setStatus('verifying');
   setMessage('Trwa weryfikacja Twojego konta...');
@@ -14,8 +15,18 @@ const handleInitialVerification = async (token, setStatus, setMessage, login, na
     if (success && jwtToken) {
       setStatus('success');
       setMessage(responseMessage + ' Za chwilę zostaniesz przekierowany...');
-      login(jwtToken);
-      setTimeout(() => navigate(redirect, { replace: true }), 2000);
+      
+      // Czekamy na pełne zakończenie procesu logowania
+      const loggedInUser = await login(jwtToken);
+      
+      // Przekierowujemy dopiero, gdy mamy pewność, że użytkownik jest zalogowany
+      if (loggedInUser) {
+        setTimeout(() => navigate(redirect, { replace: true }), 1500);
+      } else {
+        setStatus('error');
+        setMessage('Logowanie po weryfikacji nie powiodło się. Spróbuj zalogować się ręcznie.');
+      }
+
     } else if (success && !jwtToken) {
       setStatus('success');
       setMessage(responseMessage + ' Przekierowujemy do strony logowania...');
@@ -40,8 +51,16 @@ const handleReminderLogin = async (token, setStatus, setMessage, login, navigate
     if (success) {
       setStatus('success');
       setMessage(responseMessage + ' Przekierowujemy...');
-      login(newJwtToken);
-      setTimeout(() => navigate(redirect, { replace: true }), 2000);
+      
+      // Czekamy na pełne zakończenie procesu logowania
+      const loggedInUser = await login(newJwtToken);
+
+      if (loggedInUser) {
+        setTimeout(() => navigate(redirect, { replace: true }), 1500);
+      } else {
+         setStatus('error');
+         setMessage('Logowanie za pomocą linku nie powiodło się. Spróbuj zalogować się ręcznie.');
+      }
     } else {
       setStatus('error');
       setMessage(responseMessage || 'Logowanie za pomocą linku nie powiodło się.');
@@ -61,12 +80,10 @@ function VerifyEmailPage() {
   const [status, setStatus] = useState('verifying');
   const [message, setMessage] = useState('Przetwarzanie Twojego żądania...');
 
-  // Kluczowy element: Ref, który będzie śledził, czy efekt już się uruchomił.
   const effectRan = useRef(false);
 
   useEffect(() => {
-    // W trybie deweloperskim, ten warunek zatrzyma drugie, niechciane uruchomienie.
-    // W trybie produkcyjnym, ten warunek nigdy nie będzie prawdziwy, więc nie ma wpływu na działanie.
+    // Ten warunek zapobiega podwójnemu uruchomieniu w React Strict Mode
     if (effectRan.current === true && process.env.NODE_ENV === 'development') {
       return;
     }
@@ -83,11 +100,10 @@ function VerifyEmailPage() {
       setMessage('Brak wymaganego tokena w adresie URL.');
     }
     
-    // Ustawiamy flagę na true po pierwszym uruchomieniu.
     return () => {
       effectRan.current = true;
     };
-  }, []); // Pusta tablica zależności, aby efekt uruchomił się tylko raz przy montowaniu komponentu.
+  }, []); // Pusta tablica zależności jest kluczowa
 
   return (
     <div style={{ textAlign: 'center', padding: '50px', maxWidth: '600px', margin: '2rem auto', border: '1px solid #eee', borderRadius: '8px' }}>
@@ -97,7 +113,7 @@ function VerifyEmailPage() {
       {status === 'error' && (
         <>
           <p style={{ color: 'red' }}>{message}</p>
-          <Link to="/" style={{marginTop: '20px', display: 'inline-block'}}>Wróć na stronę główną</Link>
+          <Link to="/login" style={{marginTop: '20px', display: 'inline-block'}}>Wróć do strony logowania</Link>
         </>
       )}
     </div>
