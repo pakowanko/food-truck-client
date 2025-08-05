@@ -89,15 +89,22 @@ const ConversationModal = ({ conversation, onClose }) => {
     );
 };
 
+// --- ZAKTUALIZOWANY KOMPONENT MODALNY DO ZARZĄDZANIA PROFILAMI ---
 const ManageProfilesModal = ({ user, onClose }) => {
     const [profiles, setProfiles] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [editingRadiuses, setEditingRadiuses] = useState({});
 
     const fetchProfiles = async () => {
         setLoading(true);
         try {
             const { data } = await api.get(`/admin/users/${user.user_id}/profiles`);
             setProfiles(data);
+            const initialRadiuses = data.reduce((acc, p) => {
+                acc[p.profile_id] = p.operation_radius_km || '';
+                return acc;
+            }, {});
+            setEditingRadiuses(initialRadiuses);
         } catch (error) {
             console.error("Błąd pobierania profili", error);
         } finally {
@@ -108,6 +115,25 @@ const ManageProfilesModal = ({ user, onClose }) => {
     useEffect(() => {
         fetchProfiles();
     }, [user.user_id]);
+
+    const handleRadiusChange = (profileId, value) => {
+        setEditingRadiuses(prev => ({ ...prev, [profileId]: value }));
+    };
+
+    const handleSaveRadius = async (profileId) => {
+        const newRadius = editingRadiuses[profileId];
+        if (!newRadius || isNaN(parseInt(newRadius, 10))) {
+            alert("Wprowadź poprawną liczbę jako promień.");
+            return;
+        }
+        try {
+            await api.put(`/admin/profiles/${profileId}/details`, { operation_radius_km: newRadius });
+            alert("Promień został zaktualizowany!");
+            fetchProfiles();
+        } catch (error) {
+            alert(error.response?.data?.message || "Nie udało się zaktualizować promienia.");
+        }
+    };
 
     const handleDeleteProfile = async (profileId) => {
         if (window.confirm("Czy na pewno chcesz usunąć ten profil food trucka? Tej operacji nie można cofnąć.")) {
@@ -122,18 +148,39 @@ const ManageProfilesModal = ({ user, onClose }) => {
 
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-            <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '700px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
                 <h2 style={{marginTop: 0}}>Zarządzaj profilami: {user.email}</h2>
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                     {loading ? <p>Wczytywanie profili...</p> : (
-                        <ul style={{listStyle: 'none', padding: 0}}>
-                            {profiles.length > 0 ? profiles.map(p => (
-                                <li key={p.profile_id} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #eee'}}>
-                                    <span>{p.food_truck_name} (ID: {p.profile_id})</span>
-                                    <button onClick={() => handleDeleteProfile(p.profile_id)} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
-                                </li>
-                            )) : <p>Ten użytkownik nie ma jeszcze żadnych profili.</p>}
-                        </ul>
+                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                            <thead>
+                                <tr>
+                                    <th style={{textAlign: 'left', padding: '8px'}}>Nazwa Food Trucka</th>
+                                    <th style={{textAlign: 'left', padding: '8px'}}>Promień (km)</th>
+                                    <th style={{textAlign: 'left', padding: '8px'}}>Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {profiles.length > 0 ? profiles.map(p => (
+                                    <tr key={p.profile_id}>
+                                        <td style={{padding: '8px', borderTop: '1px solid #eee'}}>{p.food_truck_name} (ID: {p.profile_id})</td>
+                                        <td style={{padding: '8px', borderTop: '1px solid #eee'}}>
+                                            <input 
+                                                type="number"
+                                                value={editingRadiuses[p.profile_id] || ''}
+                                                onChange={(e) => handleRadiusChange(p.profile_id, e.target.value)}
+                                                style={{width: '80px', padding: '5px'}}
+                                                placeholder="Brak"
+                                            />
+                                        </td>
+                                        <td style={{padding: '8px', borderTop: '1px solid #eee', display: 'flex', gap: '5px'}}>
+                                            <button onClick={() => handleSaveRadius(p.profile_id)}>Zapisz</button>
+                                            <button onClick={() => handleDeleteProfile(p.profile_id)} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
+                                        </td>
+                                    </tr>
+                                )) : <tr><td colSpan="3"><p>Ten użytkownik nie ma jeszcze żadnych profili.</p></td></tr>}
+                            </tbody>
+                        </table>
                     )}
                 </div>
                 <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end' }}>
