@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
 
-// Komponent do edycji danych użytkownika
+// --- ZAKTUALIZOWANY KOMPONENT: Dodano pole na numer telefonu ---
 const EditUserModal = ({ user, onClose, onSave }) => {
     const [formData, setFormData] = useState(user);
 
@@ -55,7 +55,6 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     );
 };
 
-// Komponent do podglądu rozmowy
 const ConversationModal = ({ conversation, onClose }) => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -95,7 +94,6 @@ const ConversationModal = ({ conversation, onClose }) => {
     );
 };
 
-// Komponent do szczegółowej edycji profilu
 const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
     const [formData, setFormData] = useState({
         food_truck_description: '',
@@ -186,7 +184,6 @@ const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
     );
 };
 
-// Komponent do zarządzania profilami
 const ManageProfilesModal = ({ user, onClose }) => {
     const [profiles, setProfiles] = useState([]);
     const [loading, setLoading] = useState(true);
