@@ -21,9 +21,8 @@ function RegisterPage() {
     const formRowStyle = { marginTop: '15px' };
     const labelStyle = { display: 'block', marginBottom: '5px', fontWeight: '500' };
     const errorTextStyle = { color: 'red', fontSize: '0.8rem', marginTop: '5px' };
-    const hintTextStyle = { color: '#666', fontSize: '0.8rem', marginTop: '5px' };
 
-    // Stany (z dodanym obiektem na błędy walidacji)
+    // Stany (bez zmian)
     const [userType, setUserType] = useState('organizer');
     const [formData, setFormData] = useState({
         first_name: '', last_name: '', email: '', phone_number: '', country_code: 'PL',
@@ -34,9 +33,8 @@ function RegisterPage() {
     const [city, setCity] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-    const [validationErrors, setValidationErrors] = useState({}); // <-- NOWY STAN DLA BŁĘDÓW WALIDACJI
-    const [apiError, setApiError] = useState(''); // Zmieniona nazwa, żeby uniknąć konfliktu
+    const [validationErrors, setValidationErrors] = useState({});
+    const [apiError, setApiError] = useState('');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
@@ -44,17 +42,14 @@ function RegisterPage() {
     const navigate = useNavigate();
     const { login } = useContext(AuthContext);
 
-    // --- ZAKTUALIZOWANA FUNKCJA handleChange ---
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-        // Czyścimy błąd dla danego pola, gdy użytkownik zaczyna pisać
-        if (validationErrors[name]) {
-            setValidationErrors(prev => ({ ...prev, [name]: null }));
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+        if (validationErrors[e.target.name]) {
+            setValidationErrors(prev => ({ ...prev, [e.target.name]: null }));
         }
     };
 
-    // --- NOWA FUNKCJA DO WALIDACJI ---
+    // --- ZAKTUALIZOWANA FUNKCJA DO WALIDACJI ---
     const validateForm = () => {
         const newErrors = {};
         const { password, confirmPassword, nip, phone_number } = formData;
@@ -65,6 +60,10 @@ function RegisterPage() {
         if (password !== confirmPassword) {
             newErrors.confirmPassword = 'Hasła nie są takie same.';
         }
+        // ZMIANA: Walidacja numeru telefonu jest teraz obowiązkowa dla wszystkich
+        if (!phone_number || !/^\d{9,}$/.test(phone_number.replace(/\s/g, ''))) {
+            newErrors.phone_number = 'Numer telefonu jest wymagany i musi mieć co najmniej 9 cyfr.';
+        }
 
         if (userType === 'food_truck_owner') {
             if (nip && !/^\d{10}$/.test(nip)) {
@@ -73,23 +72,19 @@ function RegisterPage() {
             if (postalCode && !/^\d{2}-\d{3}$/.test(postalCode)) {
                 newErrors.postalCode = 'Nieprawidłowy format. Użyj formatu 00-000.';
             }
-            if (phone_number && !/^\d{9,}$/.test(phone_number.replace(/\s/g, ''))) {
-                newErrors.phone_number = 'Numer telefonu musi składać się z co najmniej 9 cyfr.';
-            }
         }
         
         setValidationErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    // --- ZAKTUALIZOWANA FUNKCJA handleSubmit ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         setApiError('');
         setMessage('');
 
         if (!validateForm()) {
-            return; // Zatrzymaj, jeśli formularz jest niepoprawny
+            return;
         }
 
         setLoading(true);
@@ -110,7 +105,6 @@ function RegisterPage() {
     };
 
     const handleGoogleSuccess = async (credentialResponse) => {
-        // ... (bez zmian)
         setLoading(true);
         setMessage('');
         try {
@@ -133,7 +127,6 @@ function RegisterPage() {
     };
 
     if (registrationSuccess) {
-        // ... (bez zmian)
         return (
             <div style={{ textAlign: 'center', padding: '50px', maxWidth: '600px', margin: '2rem auto', border: '1px solid #eee', borderRadius: '8px' }}>
                 <h1>Rejestracja prawie ukończona!</h1>
@@ -158,14 +151,13 @@ function RegisterPage() {
 
                 <fieldset style={{ border: '1px solid #eee', padding: '15px', borderRadius: '5px' }}>
                     <legend>Dane podstawowe</legend>
-                    {/* Pola Imię, Nazwisko, Email bez zmian */}
                     <div style={formRowStyle}><label htmlFor="first_name" style={labelStyle}>Imię</label><input id="first_name" type="text" name="first_name" value={formData.first_name} onChange={handleChange} required style={inputStyle} /></div>
                     <div style={formRowStyle}><label htmlFor="last_name" style={labelStyle}>Nazwisko</label><input id="last_name" type="text" name="last_name" value={formData.last_name} onChange={handleChange} required style={inputStyle} /></div>
                     <div style={formRowStyle}><label htmlFor="email" style={labelStyle}>Adres e-mail</label><input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required style={inputStyle} /></div>
                     
                     <div style={formRowStyle}>
                         <label htmlFor="phone_number" style={labelStyle}>Numer telefonu</label>
-                        <input id="phone_number" type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} required style={inputStyle} />
+                        <input id="phone_number" type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} required style={inputStyle} placeholder="np. 500100200" />
                         {validationErrors.phone_number && <p style={errorTextStyle}>{validationErrors.phone_number}</p>}
                     </div>
 
