@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
 
+// Komponent do edycji danych użytkownika (bez zmian)
 const EditUserModal = ({ user, onClose, onSave }) => {
     const [formData, setFormData] = useState(user);
 
@@ -24,22 +25,16 @@ const EditUserModal = ({ user, onClose, onSave }) => {
                         <option value="organizer">Organizator</option>
                         <option value="food_truck_owner">Właściciel Food Trucka</option>
                     </select>
-
                     <label style={{display: 'block', marginTop: '15px'}}>Nazwa firmy:</label>
                     <input name="company_name" value={formData.company_name || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-
                     <label style={{display: 'block', marginTop: '15px'}}>NIP:</label>
                     <input name="nip" value={formData.nip || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-                    
                     <label style={{display: 'block', marginTop: '15px'}}>Ulica i numer:</label>
                     <input name="street_address" value={formData.street_address || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-
                     <label style={{display: 'block', marginTop: '15px'}}>Kod pocztowy:</label>
                     <input name="postal_code" value={formData.postal_code || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-
                     <label style={{display: 'block', marginTop: '15px'}}>Miasto:</label>
                     <input name="city" value={formData.city || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-
                     <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                         <button type="button" onClick={onClose}>Anuluj</button>
                         <button type="submit">Zapisz zmiany</button>
@@ -50,6 +45,7 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     );
 };
 
+// Komponent do podglądu rozmowy (bez zmian)
 const ConversationModal = ({ conversation, onClose }) => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -89,22 +85,108 @@ const ConversationModal = ({ conversation, onClose }) => {
     );
 };
 
-// --- ZAKTUALIZOWANY KOMPONENT MODALNY DO ZARZĄDZANIA PROFILAMI ---
+// Komponent do szczegółowej edycji profilu
+const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
+    const [formData, setFormData] = useState({
+        food_truck_description: '',
+        base_location: '',
+        operation_radius_km: ''
+    });
+    const [gallery, setGallery] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProfileDetails = async () => {
+            setLoading(true);
+            try {
+                const { data } = await api.get(`/admin/profiles/${profile.profile_id}`);
+                setFormData({
+                    food_truck_description: data.food_truck_description || '',
+                    base_location: data.base_location || '',
+                    operation_radius_km: data.operation_radius_km || ''
+                });
+                setGallery(data.gallery_photo_urls || []);
+            } catch (error) {
+                console.error("Błąd pobierania szczegółów profilu", error);
+                alert("Nie udało się wczytać danych profilu.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProfileDetails();
+    }, [profile.profile_id]);
+
+    const handleChange = (e) => {
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleSave = async () => {
+        try {
+            await api.put(`/admin/profiles/${profile.profile_id}/details`, formData);
+            alert("Zmiany zostały zapisane!");
+            onSave(); // Funkcja do odświeżenia listy w poprzednim oknie
+        } catch (error) {
+            alert(error.response?.data?.message || "Nie udało się zapisać zmian.");
+        }
+    };
+
+    const handleDeletePhoto = async (photoUrl) => {
+        if (window.confirm("Czy na pewno chcesz usunąć to zdjęcie?")) {
+            try {
+                await api.delete(`/admin/profiles/${profile.profile_id}/photo`, { data: { photoUrl } });
+                setGallery(prev => prev.filter(url => url !== photoUrl));
+                alert("Zdjęcie usunięte.");
+            } catch (error) {
+                alert("Nie udało się usunąć zdjęcia.");
+            }
+        }
+    };
+
+    return (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1001 }}>
+            <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '800px', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                <h2 style={{marginTop: 0}}>Edytuj profil: {profile.food_truck_name}</h2>
+                {loading ? <p>Wczytywanie...</p> : (
+                    <>
+                        <div>
+                            <label>Opis:</label>
+                            <textarea name="food_truck_description" value={formData.food_truck_description} onChange={handleChange} style={{width: '100%', minHeight: '100px', padding: '8px'}} />
+                            <label style={{display: 'block', marginTop: '15px'}}>Miasto / Lokalizacja bazowa:</label>
+                            <input name="base_location" value={formData.base_location} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+                            <label style={{display: 'block', marginTop: '15px'}}>Promień (km):</label>
+                            <input name="operation_radius_km" type="number" value={formData.operation_radius_km} onChange={handleChange} style={{width: '100px', padding: '8px'}} />
+                        </div>
+                        <h3 style={{marginTop: '30px'}}>Galeria zdjęć:</h3>
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px', border: '1px solid #eee', padding: '10px'}}>
+                            {gallery.length > 0 ? gallery.map(url => (
+                                <div key={url} style={{position: 'relative'}}>
+                                    <img src={url} alt="zdjęcie z galerii" style={{width: '100%', height: '100px', objectFit: 'cover', borderRadius: '4px'}} />
+                                    <button onClick={() => handleDeletePhoto(url)} style={{position: 'absolute', top: '5px', right: '5px', backgroundColor: 'rgba(220, 53, 69, 0.8)', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '50%', width: '25px', height: '25px'}}>X</button>
+                                </div>
+                            )) : <p>Brak zdjęć w galerii.</p>}
+                        </div>
+                        <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                            <button type="button" onClick={onClose}>Anuluj</button>
+                            <button type="button" onClick={handleSave}>Zapisz wszystkie zmiany</button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// Komponent do zarządzania profilami (teraz otwiera nowy modal)
 const ManageProfilesModal = ({ user, onClose }) => {
     const [profiles, setProfiles] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [editingRadiuses, setEditingRadiuses] = useState({});
+    const [editingProfile, setEditingProfile] = useState(null);
 
     const fetchProfiles = async () => {
         setLoading(true);
         try {
             const { data } = await api.get(`/admin/users/${user.user_id}/profiles`);
             setProfiles(data);
-            const initialRadiuses = data.reduce((acc, p) => {
-                acc[p.profile_id] = p.operation_radius_km || '';
-                return acc;
-            }, {});
-            setEditingRadiuses(initialRadiuses);
         } catch (error) {
             console.error("Błąd pobierania profili", error);
         } finally {
@@ -115,25 +197,6 @@ const ManageProfilesModal = ({ user, onClose }) => {
     useEffect(() => {
         fetchProfiles();
     }, [user.user_id]);
-
-    const handleRadiusChange = (profileId, value) => {
-        setEditingRadiuses(prev => ({ ...prev, [profileId]: value }));
-    };
-
-    const handleSaveRadius = async (profileId) => {
-        const newRadius = editingRadiuses[profileId];
-        if (!newRadius || isNaN(parseInt(newRadius, 10))) {
-            alert("Wprowadź poprawną liczbę jako promień.");
-            return;
-        }
-        try {
-            await api.put(`/admin/profiles/${profileId}/details`, { operation_radius_km: newRadius });
-            alert("Promień został zaktualizowany!");
-            fetchProfiles();
-        } catch (error) {
-            alert(error.response?.data?.message || "Nie udało się zaktualizować promienia.");
-        }
-    };
 
     const handleDeleteProfile = async (profileId) => {
         if (window.confirm("Czy na pewno chcesz usunąć ten profil food trucka? Tej operacji nie można cofnąć.")) {
@@ -147,47 +210,40 @@ const ManageProfilesModal = ({ user, onClose }) => {
     };
 
     return (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-            <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '700px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
-                <h2 style={{marginTop: 0}}>Zarządzaj profilami: {user.email}</h2>
-                <div style={{ flex: 1, overflowY: 'auto' }}>
-                    {loading ? <p>Wczytywanie profili...</p> : (
-                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
-                            <thead>
-                                <tr>
-                                    <th style={{textAlign: 'left', padding: '8px'}}>Nazwa Food Trucka</th>
-                                    <th style={{textAlign: 'left', padding: '8px'}}>Promień (km)</th>
-                                    <th style={{textAlign: 'left', padding: '8px'}}>Akcje</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {profiles.length > 0 ? profiles.map(p => (
-                                    <tr key={p.profile_id}>
-                                        <td style={{padding: '8px', borderTop: '1px solid #eee'}}>{p.food_truck_name} (ID: {p.profile_id})</td>
-                                        <td style={{padding: '8px', borderTop: '1px solid #eee'}}>
-                                            <input 
-                                                type="number"
-                                                value={editingRadiuses[p.profile_id] || ''}
-                                                onChange={(e) => handleRadiusChange(p.profile_id, e.target.value)}
-                                                style={{width: '80px', padding: '5px'}}
-                                                placeholder="Brak"
-                                            />
-                                        </td>
-                                        <td style={{padding: '8px', borderTop: '1px solid #eee', display: 'flex', gap: '5px'}}>
-                                            <button onClick={() => handleSaveRadius(p.profile_id)}>Zapisz</button>
-                                            <button onClick={() => handleDeleteProfile(p.profile_id)} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
-                                        </td>
+        <>
+            {editingProfile && <EditProfileDetailsModal profile={editingProfile} onClose={() => setEditingProfile(null)} onSave={() => { fetchProfiles(); setEditingProfile(null); }} />}
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+                <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '700px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+                    <h2 style={{marginTop: 0}}>Zarządzaj profilami: {user.email}</h2>
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {loading ? <p>Wczytywanie profili...</p> : (
+                            <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                                <thead>
+                                    <tr>
+                                        <th style={{textAlign: 'left', padding: '8px'}}>Nazwa Food Trucka</th>
+                                        <th style={{textAlign: 'left', padding: '8px'}}>Akcje</th>
                                     </tr>
-                                )) : <tr><td colSpan="3"><p>Ten użytkownik nie ma jeszcze żadnych profili.</p></td></tr>}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
-                <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button type="button" onClick={onClose}>Zamknij</button>
+                                </thead>
+                                <tbody>
+                                    {profiles.length > 0 ? profiles.map(p => (
+                                        <tr key={p.profile_id}>
+                                            <td style={{padding: '8px', borderTop: '1px solid #eee'}}>{p.food_truck_name} (ID: {p.profile_id})</td>
+                                            <td style={{padding: '8px', borderTop: '1px solid #eee', display: 'flex', gap: '5px'}}>
+                                                <button onClick={() => setEditingProfile(p)}>Edytuj szczegóły</button>
+                                                <button onClick={() => handleDeleteProfile(p.profile_id)} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
+                                            </td>
+                                        </tr>
+                                    )) : <tr><td colSpan="2"><p>Ten użytkownik nie ma jeszcze żadnych profili.</p></td></tr>}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                    <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button type="button" onClick={onClose}>Zamknij</button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 
@@ -204,6 +260,15 @@ function AdminPage() {
     const [editingUser, setEditingUser] = useState(null);
     const [viewingConversation, setViewingConversation] = useState(null);
     const [managingUser, setManagingUser] = useState(null);
+
+    const bookingStatusMap = {
+        pending_owner_approval: { text: 'Oczekuje na akceptację', color: '#ffc107' },
+        confirmed: { text: 'Potwierdzona', color: 'green' },
+        rejected_by_owner: { text: 'Odrzucona (Właściciel)', color: 'red' },
+        cancelled_by_organizer: { text: 'Anulowana (Organizator)', color: '#6c757d' },
+        cancelled_by_owner: { text: 'Anulowana (Właściciel)', color: '#6c757d' },
+        completed: { text: 'Zakończona', color: 'blue' }
+    };
 
     const fetchData = async () => {
         setLoading(true);
@@ -361,6 +426,7 @@ function AdminPage() {
                             <th style={{ textAlign: 'left', padding: '8px' }}>ID</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Food Truck</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Data eventu</th>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>Status Rezerwacji</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Status Prowizji</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Status Opakowań</th>
                             <th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
@@ -372,6 +438,13 @@ function AdminPage() {
                                 <td style={{ padding: '8px' }}>{booking.request_id}</td>
                                 <td style={{ padding: '8px' }}>{booking.company_name}</td>
                                 <td style={{ padding: '8px' }}>{new Date(booking.event_start_date).toLocaleDateString()}</td>
+                                <td style={{ 
+                                    padding: '8px', 
+                                    color: bookingStatusMap[booking.status]?.color || 'black', 
+                                    fontWeight: 'bold' 
+                                }}>
+                                    {bookingStatusMap[booking.status]?.text || booking.status}
+                                </td>
                                 <td style={{ padding: '8px', color: booking.commission_paid ? 'green' : 'red', fontWeight: 'bold' }}>{booking.commission_paid ? 'Opłacona' : 'Nieopłacona'}</td>
                                 <td style={{ padding: '8px', color: booking.packaging_ordered ? 'green' : 'orange', fontWeight: 'bold' }}>{booking.packaging_ordered ? 'Zamówione' : 'Brak zamówienia'}</td>
                                  <td style={{ padding: '8px', display: 'flex', gap: '10px' }}>
