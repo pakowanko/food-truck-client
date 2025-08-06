@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
 
-// Komponent do edycji danych użytkownika (bez zmian)
+// Komponent do edycji danych użytkownika
 const EditUserModal = ({ user, onClose, onSave }) => {
     const [formData, setFormData] = useState(user);
 
@@ -25,16 +25,26 @@ const EditUserModal = ({ user, onClose, onSave }) => {
                         <option value="organizer">Organizator</option>
                         <option value="food_truck_owner">Właściciel Food Trucka</option>
                     </select>
+
                     <label style={{display: 'block', marginTop: '15px'}}>Nazwa firmy:</label>
                     <input name="company_name" value={formData.company_name || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+
+                    {/* NOWE POLE */}
+                    <label style={{display: 'block', marginTop: '15px'}}>Numer telefonu:</label>
+                    <input name="phone_number" value={formData.phone_number || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+
                     <label style={{display: 'block', marginTop: '15px'}}>NIP:</label>
                     <input name="nip" value={formData.nip || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+                    
                     <label style={{display: 'block', marginTop: '15px'}}>Ulica i numer:</label>
                     <input name="street_address" value={formData.street_address || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+
                     <label style={{display: 'block', marginTop: '15px'}}>Kod pocztowy:</label>
                     <input name="postal_code" value={formData.postal_code || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+
                     <label style={{display: 'block', marginTop: '15px'}}>Miasto:</label>
                     <input name="city" value={formData.city || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
+
                     <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                         <button type="button" onClick={onClose}>Anuluj</button>
                         <button type="submit">Zapisz zmiany</button>
@@ -45,7 +55,7 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     );
 };
 
-// Komponent do podglądu rozmowy (bez zmian)
+// Komponent do podglądu rozmowy
 const ConversationModal = ({ conversation, onClose }) => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -124,7 +134,7 @@ const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
         try {
             await api.put(`/admin/profiles/${profile.profile_id}/details`, formData);
             alert("Zmiany zostały zapisane!");
-            onSave(); // Funkcja do odświeżenia listy w poprzednim oknie
+            onSave();
         } catch (error) {
             alert(error.response?.data?.message || "Nie udało się zapisać zmian.");
         }
@@ -176,7 +186,7 @@ const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
     );
 };
 
-// Komponent do zarządzania profilami (teraz otwiera nowy modal)
+// Komponent do zarządzania profilami
 const ManageProfilesModal = ({ user, onClose }) => {
     const [profiles, setProfiles] = useState([]);
     const [loading, setLoading] = useState(true);
