@@ -8,6 +8,7 @@ import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AdminRoute from './components/AdminRoute.jsx';
+import SocialProofPopup from './components/SocialProofPopup';
 
 // Import stron
 import HomePage from './pages/HomePage.jsx';
@@ -26,6 +27,7 @@ import AdminPage from './pages/AdminPage.jsx';
 import MyAccountPage from './pages/MyAccountPage.jsx';
 import RequestPasswordResetPage from './pages/RequestPasswordResetPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
+
 
 const GOOGLE_CLIENT_ID = '1035693089076-606q1auo4o0cb62lmj21djqeqjvor4pj.apps.googleusercontent.com';
 
