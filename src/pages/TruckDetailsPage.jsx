@@ -108,7 +108,7 @@ function TruckDetailsPage() {
       <div style={{ maxWidth: '900px', margin: '20px auto', padding: '20px' }}>
         
         <h1>{profile.food_truck_name}</h1>
-        <p>{profile.food_truck_description}</p>
+        <p style={{ whiteSpace: 'pre-wrap' }}>{profile.food_truck_description}</p>
         <p style={{ color: '#6c757d' }}>
           <strong>Lokalizacja:</strong> {profile.base_location} (działamy w promieniu {profile.operation_radius_km || 'N/A'} km)
         </p>
