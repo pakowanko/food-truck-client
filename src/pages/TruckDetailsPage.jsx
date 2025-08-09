@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { AuthContext } from '../AuthContext.jsx';
 import { api } from '../apiConfig.js';
 
-// Komponent do wyświetlania gwiazdek
+// --- ZMIANA: Komponent do wyświetlania gwiazdek został zakomentowany ---
+/*
 const StarRatingDisplay = ({ rating }) => {
     const totalStars = 5;
     let stars = [];
@@ -14,6 +15,7 @@ const StarRatingDisplay = ({ rating }) => {
     }
     return <div>{stars}</div>;
 };
+*/
 
 // Komponent Lightbox do powiększania zdjęć
 const ImageLightbox = ({ imageUrl, onClose }) => {
@@ -43,17 +45,24 @@ function TruckDetailsPage() {
   const { user } = useContext(AuthContext);
 
   const [profile, setProfile] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [averageRating, setAverageRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+
+  // --- ZMIANA: Stany dla opinii i ocen zostały zakomentowane ---
+  // const [reviews, setReviews] = useState([]);
+  // const [averageRating, setAverageRating] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError('');
       try {
+        // --- ZMIANA: Usunięto pobieranie opinii. Pobieramy tylko profil. ---
+        const profileRes = await api.get(`/profiles/${profileId}`);
+        setProfile(profileRes.data);
+
+        /* ---- ABY PRZYWRÓCIĆ OCENY, ODKOMENTUJ PONIŻSZY BLOK... ----
         const [profileRes, reviewsRes] = await Promise.all([
           api.get(`/profiles/${profileId}`),
           api.get(`/reviews/profile/${profileId}`)
@@ -69,6 +78,7 @@ function TruckDetailsPage() {
         } else {
           setAverageRating(0);
         }
+        */
 
       } catch (err) {
         setError(err.response?.data?.message || 'Nie udało się pobrać danych.');
@@ -122,6 +132,8 @@ function TruckDetailsPage() {
           )}
         </section>
         
+        {/* --- ZMIANA: Cała sekcja opinii została zakomentowana --- */}
+        {/*
         <section style={styles.section}>
           <h2>Opinie</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
@@ -138,8 +150,9 @@ function TruckDetailsPage() {
                 </div>
               ))}
             </div>
-        ) : <p>Ten food truck nie ma jeszcze żadnych opinii.</p>}
+          ) : <p>Ten food truck nie ma jeszcze żadnych opinii.</p>}
         </section>
+        */}
 
         <div style={{margin: '40px 0', textAlign: 'center'}}>
             {!user && (

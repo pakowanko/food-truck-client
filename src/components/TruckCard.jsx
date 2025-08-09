@@ -2,6 +2,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+// --- ZMIANA: Komponent gwiazdek został zakomentowany ---
+/*
 const StarRatingDisplay = ({ rating, count }) => {
     if (count === 0) return <small style={{ color: '#6c757d' }}>Brak opinii</small>;
     const totalStars = 5;
@@ -11,6 +13,7 @@ const StarRatingDisplay = ({ rating, count }) => {
     }
     return <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{stars} <span style={{ color: '#6c757d', fontSize: '0.9rem' }}>({count})</span></div>;
 };
+*/
 
 const styles = {
     card: {
@@ -70,7 +73,8 @@ const TruckCard = ({ profile }) => {
       />
       <div style={styles.cardBody}>
         <h3 style={styles.cardTitle}>{profile.food_truck_name}</h3>
-        <StarRatingDisplay rating={profile.average_rating} count={profile.review_count} />
+        {/* --- ZMIANA: Wywołanie komponentu gwiazdek zostało zakomentowane --- */}
+        {/* <StarRatingDisplay rating={profile.average_rating} count={profile.review_count} /> */}
         <p style={styles.cardText}>
           <strong>Główne dania:</strong> {offerSummary}{profile.offer?.dishes?.length > 3 ? '...' : ''}
         </p>

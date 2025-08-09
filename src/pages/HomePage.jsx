@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import TruckCard from '../components/TruckCard.jsx';
 import { api } from '../apiConfig.js';
 
-// Zaktualizowana i posortowana lista, zgodna z formularzem tworzenia profilu
 const ALL_CUISINES = [
   "Burgery", "Churros", "Frytki belgijskie", "Gofry", "Granita", "Hot-dogi", 
   "Kebab", "Kuchnia azjatycka", "Kuchnia meksykańska", "Kuchnia polska", 
@@ -18,8 +17,10 @@ function HomePage() {
   const [cuisine, setCuisine] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [minRating, setMinRating] = useState('');
   const [longTermRental, setLongTermRental] = useState(false);
+  
+  // --- ZMIANA: Stan dla ocen został zakomentowany ---
+  // const [minRating, setMinRating] = useState('');
 
   const fetchProfiles = async (filters = {}) => {
     setLoading(true);
@@ -49,8 +50,9 @@ function HomePage() {
       postal_code: postalCode,
       event_start_date: startDate,
       event_end_date: endDate,
-      min_rating: minRating,
-      long_term_rental: longTermRental
+      long_term_rental: longTermRental,
+      // --- ZMIANA: Filtr ocen został zakomentowany ---
+      // min_rating: minRating,
     };
     fetchProfiles(filters);
   };
@@ -100,6 +102,8 @@ function HomePage() {
             <input id="endDate" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={searchInputStyle} title="Data zakończenia"/>
           </div>
           
+          {/* --- ZMIANA: Pole filtra ocen zostało zakomentowane --- */}
+          {/*
           <div>
             <label htmlFor="minRating" style={labelStyle}>Ocena</label>
             <select id="minRating" value={minRating} onChange={e => setMinRating(e.target.value)} style={searchInputStyle}>
@@ -109,6 +113,7 @@ function HomePage() {
               <option value="2">2 gwiazdki i więcej</option>
             </select>
           </div>
+          */}
         </div>
         
         <div style={{ marginTop: '20px' }}>
