@@ -26,7 +26,7 @@ const SocialProofPopup = () => {
 
                 setTimeout(() => {
                     setIsVisible(false);
-                }, 8000);
+                }, 10000);
 
             }, 4000);
 
