@@ -78,6 +78,7 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          <SocialProofPopup /> {/* // <<< DODAJ TĘ LINIĘ */}
         </Router>
       </AuthProvider>
     </GoogleOAuthProvider>
