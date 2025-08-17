@@ -52,6 +52,8 @@ function AdminBookingDetailsPage() {
                     <p><strong>Lokalizacja:</strong> {booking.event_location}</p>
                     <p><strong>Liczba gości:</strong> {booking.guest_count}</p>
                     <p><strong>Typ wydarzenia:</strong> {booking.event_type}</p>
+                    {/* // <<< ZMIENIONA NAZWA POLA I ETYKIETA */}
+                    <p><strong>Dodatkowe ustalenia (opłaty, media itp.):</strong> <span style={{ whiteSpace: 'pre-wrap' }}>{booking.utility_costs || 'Nie podano'}</span></p>
                 </div>
 
                 <div className="details-card">
@@ -84,5 +86,4 @@ function AdminBookingDetailsPage() {
     );
 }
 
-// <<< UPEWNIJ SIĘ, ŻE TA LINIA ZNAJDUJE SIĘ NA KOŃCU PLIKU
 export default AdminBookingDetailsPage;
