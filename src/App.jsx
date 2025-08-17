@@ -14,7 +14,7 @@ import SocialProofPopup from './components/SocialProofPopup';
 import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
-import VerifyEmailPage from './pages/VerifyEmailPage.jsx'; // Ta strona obsługuje teraz wszystko
+import VerifyEmailPage from './pages/VerifyEmailPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import CreateProfilePage from './pages/CreateProfilePage.jsx';
 import TruckDetailsPage from './pages/TruckDetailsPage.jsx';
@@ -27,11 +27,10 @@ import AdminPage from './pages/AdminPage.jsx';
 import MyAccountPage from './pages/MyAccountPage.jsx';
 import RequestPasswordResetPage from './pages/RequestPasswordResetPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
-
+import AdminBookingDetailsPage from './pages/AdminBookingDetailsPage.jsx';
 
 const GOOGLE_CLIENT_ID = '1035693089076-606q1auo4o0cb62lmj21djqeqjvor4pj.apps.googleusercontent.com';
 
-// Komponent pomocniczy do zarządzania powiadomieniami wewnątrz Routera
 const NotificationManager = () => {
   const { notification, setNotification } = useContext(AuthContext);
   if (!notification) return null;
@@ -58,8 +57,6 @@ function App() {
               <Route path="/regulamin" element={<TermsPage />} />
               <Route path="/polityka-prywatnosci" element={<PrivacyPolicyPage />} />
 
-              {/* Usunęliśmy stąd niepotrzebne trasy do /verify-login i /verification-result */}
-
               {/* Trasy chronione */}
               <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
               <Route path="/create-profile" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
@@ -67,8 +64,9 @@ function App() {
               <Route path="/booking/:profileId" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
               <Route path="/my-account" element={<ProtectedRoute><MyAccountPage /></ProtectedRoute>} />
            
-              {/* Trasa tylko dla admina */}
+              {/* Trasy tylko dla admina */}
               <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+              <Route path="/admin/booking/:requestId" element={<AdminRoute><AdminBookingDetailsPage /></AdminRoute>} />
 
               {/* Zagnieżdżona trasa dla czatu */}
               <Route path="/chat" element={<ProtectedRoute><ChatLayout /></ProtectedRoute>}>
@@ -78,7 +76,7 @@ function App() {
             </Routes>
           </main>
           <Footer />
-          <SocialProofPopup /> {/* // <<< DODAJ TĘ LINIĘ */}
+          <SocialProofPopup />
         </Router>
       </AuthProvider>
     </GoogleOAuthProvider>
