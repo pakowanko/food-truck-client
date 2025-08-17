@@ -1,20 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
+import { Link } from 'react-router-dom'; // <<< 1. DODANY IMPORT
 
-// --- ZAKTUALIZOWANY KOMPONENT: Dodano pole na numer telefonu ---
+// --- Komponent EditUserModal (bez zmian) ---
 const EditUserModal = ({ user, onClose, onSave }) => {
     const [formData, setFormData] = useState(user);
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave(formData);
-    };
-
+    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleSubmit = (e) => { e.preventDefault(); onSave(formData); };
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
             <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -25,26 +18,18 @@ const EditUserModal = ({ user, onClose, onSave }) => {
                         <option value="organizer">Organizator</option>
                         <option value="food_truck_owner">Właściciel Food Trucka</option>
                     </select>
-
                     <label style={{display: 'block', marginTop: '15px'}}>Nazwa firmy:</label>
                     <input name="company_name" value={formData.company_name || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-
-                    {/* NOWE POLE */}
                     <label style={{display: 'block', marginTop: '15px'}}>Numer telefonu:</label>
                     <input name="phone_number" value={formData.phone_number || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-
                     <label style={{display: 'block', marginTop: '15px'}}>NIP:</label>
                     <input name="nip" value={formData.nip || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-                    
                     <label style={{display: 'block', marginTop: '15px'}}>Ulica i numer:</label>
                     <input name="street_address" value={formData.street_address || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-
                     <label style={{display: 'block', marginTop: '15px'}}>Kod pocztowy:</label>
                     <input name="postal_code" value={formData.postal_code || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-
                     <label style={{display: 'block', marginTop: '15px'}}>Miasto:</label>
                     <input name="city" value={formData.city || ''} onChange={handleChange} style={{width: '100%', padding: '8px'}} />
-
                     <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                         <button type="button" onClick={onClose}>Anuluj</button>
                         <button type="submit">Zapisz zmiany</button>
@@ -55,24 +40,20 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     );
 };
 
+// --- Inne modale (bez zmian) ---
 const ConversationModal = ({ conversation, onClose }) => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
-
     useEffect(() => {
         const fetchMessages = async () => {
             try {
                 const { data } = await api.get(`/admin/conversations/${conversation.conversation_id}/messages`);
                 setMessages(data);
-            } catch (error) {
-                console.error("Błąd pobierania wiadomości", error);
-            } finally {
-                setLoading(false);
-            }
+            } catch (error) { console.error("Błąd pobierania wiadomości", error); }
+            finally { setLoading(false); }
         };
         fetchMessages();
     }, [conversation.conversation_id]);
-
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
             <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '600px', height: '80vh', display: 'flex', flexDirection: 'column' }}>
@@ -93,63 +74,39 @@ const ConversationModal = ({ conversation, onClose }) => {
         </div>
     );
 };
-
 const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
-    const [formData, setFormData] = useState({
-        food_truck_description: '',
-        base_location: '',
-        operation_radius_km: ''
-    });
+    const [formData, setFormData] = useState({ food_truck_description: '', base_location: '', operation_radius_km: '' });
     const [gallery, setGallery] = useState([]);
     const [loading, setLoading] = useState(true);
-
     useEffect(() => {
         const fetchProfileDetails = async () => {
             setLoading(true);
             try {
                 const { data } = await api.get(`/admin/profiles/${profile.profile_id}`);
-                setFormData({
-                    food_truck_description: data.food_truck_description || '',
-                    base_location: data.base_location || '',
-                    operation_radius_km: data.operation_radius_km || ''
-                });
+                setFormData({ food_truck_description: data.food_truck_description || '', base_location: data.base_location || '', operation_radius_km: data.operation_radius_km || '' });
                 setGallery(data.gallery_photo_urls || []);
-            } catch (error) {
-                console.error("Błąd pobierania szczegółów profilu", error);
-                alert("Nie udało się wczytać danych profilu.");
-            } finally {
-                setLoading(false);
-            }
+            } catch (error) { console.error("Błąd pobierania szczegółów profilu", error); alert("Nie udało się wczytać danych profilu."); }
+            finally { setLoading(false); }
         };
         fetchProfileDetails();
     }, [profile.profile_id]);
-
-    const handleChange = (e) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
-
+    const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleSave = async () => {
         try {
             await api.put(`/admin/profiles/${profile.profile_id}/details`, formData);
             alert("Zmiany zostały zapisane!");
             onSave();
-        } catch (error) {
-            alert(error.response?.data?.message || "Nie udało się zapisać zmian.");
-        }
+        } catch (error) { alert(error.response?.data?.message || "Nie udało się zapisać zmian."); }
     };
-
     const handleDeletePhoto = async (photoUrl) => {
         if (window.confirm("Czy na pewno chcesz usunąć to zdjęcie?")) {
             try {
                 await api.delete(`/admin/profiles/${profile.profile_id}/photo`, { data: { photoUrl } });
                 setGallery(prev => prev.filter(url => url !== photoUrl));
                 alert("Zdjęcie usunięte.");
-            } catch (error) {
-                alert("Nie udało się usunąć zdjęcia.");
-            }
+            } catch (error) { alert("Nie udało się usunąć zdjęcia."); }
         }
     };
-
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1001 }}>
             <div style={{ background: 'white', padding: '25px', borderRadius: '8px', width: '800px', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
@@ -183,39 +140,27 @@ const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
         </div>
     );
 };
-
 const ManageProfilesModal = ({ user, onClose }) => {
     const [profiles, setProfiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingProfile, setEditingProfile] = useState(null);
-
     const fetchProfiles = async () => {
         setLoading(true);
         try {
             const { data } = await api.get(`/admin/users/${user.user_id}/profiles`);
             setProfiles(data);
-        } catch (error) {
-            console.error("Błąd pobierania profili", error);
-        } finally {
-            setLoading(false);
-        }
+        } catch (error) { console.error("Błąd pobierania profili", error); }
+        finally { setLoading(false); }
     };
-
-    useEffect(() => {
-        fetchProfiles();
-    }, [user.user_id]);
-
+    useEffect(() => { fetchProfiles(); }, [user.user_id]);
     const handleDeleteProfile = async (profileId) => {
         if (window.confirm("Czy na pewno chcesz usunąć ten profil food trucka? Tej operacji nie można cofnąć.")) {
             try {
                 await api.delete(`/admin/profiles/${profileId}`);
                 fetchProfiles();
-            } catch (error) {
-                alert("Nie udało się usunąć profilu.");
-            }
+            } catch (error) { alert("Nie udało się usunąć profilu."); }
         }
     };
-
     return (
         <>
             {editingProfile && <EditProfileDetailsModal profile={editingProfile} onClose={() => setEditingProfile(null)} onSave={() => { fetchProfiles(); setEditingProfile(null); }} />}
@@ -225,12 +170,7 @@ const ManageProfilesModal = ({ user, onClose }) => {
                     <div style={{ flex: 1, overflowY: 'auto' }}>
                         {loading ? <p>Wczytywanie profili...</p> : (
                             <table style={{width: '100%', borderCollapse: 'collapse'}}>
-                                <thead>
-                                    <tr>
-                                        <th style={{textAlign: 'left', padding: '8px'}}>Nazwa Food Trucka</th>
-                                        <th style={{textAlign: 'left', padding: '8px'}}>Akcje</th>
-                                    </tr>
-                                </thead>
+                                <thead><tr><th style={{textAlign: 'left', padding: '8px'}}>Nazwa Food Trucka</th><th style={{textAlign: 'left', padding: '8px'}}>Akcje</th></tr></thead>
                                 <tbody>
                                     {profiles.length > 0 ? profiles.map(p => (
                                         <tr key={p.profile_id}>
@@ -254,7 +194,7 @@ const ManageProfilesModal = ({ user, onClose }) => {
     );
 };
 
-
+// Główny komponent strony AdminPage
 function AdminPage() {
     const { user } = useContext(AuthContext);
     const [users, setUsers] = useState([]);
@@ -290,80 +230,41 @@ function AdminPage() {
             setBookings(bookingsRes.data);
             setStats(statsRes.data);
             setConversations(convosRes.data);
-        } catch (err) {
-            setError('Nie udało się pobrać danych.');
-        } finally {
-            setLoading(false);
-        }
+        } catch (err) { setError('Nie udało się pobrać danych.'); }
+        finally { setLoading(false); }
     };
 
     useEffect(() => { fetchData(); }, []);
 
     const handleToggleBlock = async (userId) => {
-        try {
-            await api.put(`/admin/users/${userId}/toggle-block`);
-            fetchData();
-        } catch (err) {
-            alert('Nie udało się zaktualizować użytkownika.');
-        }
+        try { await api.put(`/admin/users/${userId}/toggle-block`); fetchData(); }
+        catch (err) { alert('Nie udało się zaktualizować użytkownika.'); }
     };
-
     const handlePackagingStatusChange = async (requestId, currentStatus) => {
-        try {
-            await api.put(`/admin/bookings/${requestId}/packaging-status`, { packaging_ordered: !currentStatus });
-            fetchData();
-        } catch (err) {
-            alert('Nie udało się zaktualizować statusu opakowań.');
-        }
+        try { await api.put(`/admin/bookings/${requestId}/packaging-status`, { packaging_ordered: !currentStatus }); fetchData(); }
+        catch (err) { alert('Nie udało się zaktualizować statusu opakowań.'); }
     };
-
     const handleCommissionStatusChange = async (requestId, currentStatus) => {
-        try {
-            await api.put(`/admin/bookings/${requestId}/commission-status`, { commission_paid: !currentStatus });
-            fetchData();
-        } catch (err) {
-            alert('Nie udało się zaktualizować statusu prowizji.');
-        }
+        try { await api.put(`/admin/bookings/${requestId}/commission-status`, { commission_paid: !currentStatus }); fetchData(); }
+        catch (err) { alert('Nie udało się zaktualizować statusu prowizji.'); }
     };
-
-    const openEditModal = (userToEdit) => {
-        setEditingUser(userToEdit);
-        setIsEditModalOpen(true);
-    };
-
+    const openEditModal = (userToEdit) => { setEditingUser(userToEdit); setIsEditModalOpen(true); };
     const handleUserUpdate = async (updatedUserData) => {
         try {
             await api.put(`/admin/users/${updatedUserData.user_id}`, updatedUserData);
-            setIsEditModalOpen(false);
-            setEditingUser(null);
-            fetchData();
-        } catch (err) {
-            alert('Nie udało się zaktualizować użytkownika.');
-        }
+            setIsEditModalOpen(false); setEditingUser(null); fetchData();
+        } catch (err) { alert('Nie udało się zaktualizować użytkownika.'); }
     };
-
     const handleDeleteUser = async (userIdToDelete) => {
-        if (userIdToDelete === user.userId) {
-            alert("Nie możesz usunąć własnego konta.");
-            return;
-        }
-        
+        if (userIdToDelete === user.userId) { alert("Nie możesz usunąć własnego konta."); return; }
         const confirmation = window.confirm("Czy na pewno chcesz trwale usunąć tego użytkownika i wszystkie jego dane? Tej operacji nie można cofnąć.");
         if (confirmation) {
-            try {
-                await api.delete(`/admin/users/${userIdToDelete}`);
-                fetchData();
-            } catch (err) {
-                alert('Nie udało się usunąć użytkownika.');
-            }
+            try { await api.delete(`/admin/users/${userIdToDelete}`); fetchData(); }
+            catch (err) { alert('Nie udało się usunąć użytkownika.'); }
         }
     };
 
-    const userTypeMap = {
-        organizer: 'Organizator',
-        food_truck_owner: 'Właściciel'
-    };
-
+    const userTypeMap = { organizer: 'Organizator', food_truck_owner: 'Właściciel' };
     const statCardStyle = { flex: 1, padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', textAlign: 'center', minWidth: '200px' };
     const statValueStyle = { fontSize: '2rem', fontWeight: 'bold' };
     const statLabelStyle = { fontSize: '1rem', color: '#6c757d' };
@@ -393,33 +294,21 @@ function AdminPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ borderBottom: '2px solid black' }}>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>ID</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Email</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Typ konta</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Status</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Liczba profili</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>ID</th><th style={{ textAlign: 'left', padding: '8px' }}>Email</th><th style={{ textAlign: 'left', padding: '8px' }}>Typ konta</th><th style={{ textAlign: 'left', padding: '8px' }}>Status</th><th style={{ textAlign: 'left', padding: '8px' }}>Liczba profili</th><th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
                         </tr>
                     </thead>
                     <tbody>
                         {users.map(u => (
                             <tr key={u.user_id} style={{ borderBottom: '1px solid #ccc' }}>
-                                <td style={{ padding: '8px' }}>{u.user_id}</td>
-                                <td style={{ padding: '8px' }}>{u.email}</td>
-                                <td style={{ padding: '8px' }}>
-                                    {u.role === 'admin' ? <strong>Admin</strong> : (userTypeMap[u.user_type] || u.user_type)}
-                                </td>
+                                <td style={{ padding: '8px' }}>{u.user_id}</td><td style={{ padding: '8px' }}>{u.email}</td>
+                                <td style={{ padding: '8px' }}>{u.role === 'admin' ? <strong>Admin</strong> : (userTypeMap[u.user_type] || u.user_type)}</td>
                                 <td style={{ padding: '8px', color: u.is_blocked ? 'red' : 'green' }}>{u.is_blocked ? 'Zablokowany' : 'Aktywny'}</td>
-                                <td style={{ padding: '8px', textAlign: 'center' }}>
-                                    {u.user_type === 'food_truck_owner' ? u.profile_count : 'N/A'}
-                                </td>
+                                <td style={{ padding: '8px', textAlign: 'center' }}>{u.user_type === 'food_truck_owner' ? u.profile_count : 'N/A'}</td>
                                 <td style={{ padding: '8px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                     <button onClick={() => handleToggleBlock(u.user_id)} disabled={u.user_id === user.userId}>{u.is_blocked ? 'Odblokuj' : 'Zablokuj'}</button>
                                     <button onClick={() => openEditModal(u)}>Edytuj</button>
                                     <button onClick={() => handleDeleteUser(u.user_id)} disabled={u.user_id === user.userId} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
-                                    {u.user_type === 'food_truck_owner' && (
-                                        <button onClick={() => setManagingUser(u)}>Zarządzaj profilami</button>
-                                    )}
+                                    {u.user_type === 'food_truck_owner' && (<button onClick={() => setManagingUser(u)}>Zarządzaj profilami</button>)}
                                 </td>
                             </tr>
                         ))}
@@ -430,33 +319,24 @@ function AdminPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                          <tr style={{ borderBottom: '2px solid black' }}>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>ID</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Food Truck</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Data eventu</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Status Rezerwacji</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Status Prowizji</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Status Opakowań</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>ID</th><th style={{ textAlign: 'left', padding: '8px' }}>Food Truck</th><th style={{ textAlign: 'left', padding: '8px' }}>Data eventu</th><th style={{ textAlign: 'left', padding: '8px' }}>Status Rezerwacji</th><th style={{ textAlign: 'left', padding: '8px' }}>Status Prowizji</th><th style={{ textAlign: 'left', padding: '8px' }}>Status Opakowań</th><th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
                         </tr>
                     </thead>
                     <tbody>
                         {bookings.map(booking => (
                             <tr key={booking.request_id} style={{ borderBottom: '1px solid #ccc' }}>
-                                <td style={{ padding: '8px' }}>{booking.request_id}</td>
-                                <td style={{ padding: '8px' }}>{booking.company_name}</td>
-                                <td style={{ padding: '8px' }}>{new Date(booking.event_start_date).toLocaleDateString()}</td>
-                                <td style={{ 
-                                    padding: '8px', 
-                                    color: bookingStatusMap[booking.status]?.color || 'black', 
-                                    fontWeight: 'bold' 
-                                }}>
-                                    {bookingStatusMap[booking.status]?.text || booking.status}
-                                </td>
+                                <td style={{ padding: '8px' }}>{booking.request_id}</td><td style={{ padding: '8px' }}>{booking.company_name}</td><td style={{ padding: '8px' }}>{new Date(booking.event_start_date).toLocaleDateString()}</td>
+                                <td style={{ padding: '8px', color: bookingStatusMap[booking.status]?.color || 'black', fontWeight: 'bold' }}>{bookingStatusMap[booking.status]?.text || booking.status}</td>
                                 <td style={{ padding: '8px', color: booking.commission_paid ? 'green' : 'red', fontWeight: 'bold' }}>{booking.commission_paid ? 'Opłacona' : 'Nieopłacona'}</td>
                                 <td style={{ padding: '8px', color: booking.packaging_ordered ? 'green' : 'orange', fontWeight: 'bold' }}>{booking.packaging_ordered ? 'Zamówione' : 'Brak zamówienia'}</td>
                                  <td style={{ padding: '8px', display: 'flex', gap: '10px' }}>
                                     <button onClick={() => handleCommissionStatusChange(booking.request_id, booking.commission_paid)}>Prowizja</button>
                                     <button onClick={() => handlePackagingStatusChange(booking.request_id, booking.packaging_ordered)}>Opakowania</button>
+                                    
+                                    {/* // <<< 2. DODANY LINK DO SZCZEGÓŁÓW */}
+                                    <Link to={`/admin/booking/${booking.request_id}`} style={{ padding: '0.6em 1.2em', backgroundColor: '#007bff', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '1em', fontFamily: 'inherit', border: '1px solid transparent' }}>
+                                        Szczegóły
+                                    </Link>
                                 </td>
                             </tr>
                         ))}
@@ -467,23 +347,14 @@ function AdminPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ borderBottom: '2px solid black' }}>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>ID</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Tytuł</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Uczestnicy</th>
-                            <th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
+                            <th style={{ textAlign: 'left', padding: '8px' }}>ID</th><th style={{ textAlign: 'left', padding: '8px' }}>Tytuł</th><th style={{ textAlign: 'left', padding: '8px' }}>Uczestnicy</th><th style={{ textAlign: 'left', padding: '8px' }}>Akcje</th>
                         </tr>
                     </thead>
                     <tbody>
                         {conversations.map(convo => (
                             <tr key={convo.conversation_id} style={{ borderBottom: '1px solid #ccc' }}>
-                                <td style={{ padding: '8px' }}>{convo.conversation_id}</td>
-                                <td style={{ padding: '8px' }}>{convo.title}</td>
-                                <td style={{ padding: '8px' }}>{convo.participant1_email} <br/> {convo.participant2_email}</td>
-                                <td style={{ padding: '8px' }}>
-                                    <button onClick={() => setViewingConversation(convo)}>
-                                        Podgląd
-                                    </button>
-                                </td>
+                                <td style={{ padding: '8px' }}>{convo.conversation_id}</td><td style={{ padding: '8px' }}>{convo.title}</td><td style={{ padding: '8px' }}>{convo.participant1_email} <br/> {convo.participant2_email}</td>
+                                <td style={{ padding: '8px' }}><button onClick={() => setViewingConversation(convo)}>Podgląd</button></td>
                             </tr>
                         ))}
                     </tbody>
