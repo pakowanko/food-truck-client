@@ -17,7 +17,7 @@ export function NotificationPopup({ notification, onClose }) {
         onClose();
     };
     return (
-        <div style={{
+        <div onClick={handleClick} style={{
             position: 'fixed', bottom: '20px', right: '20px', backgroundColor: 'white', 
             padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             zIndex: 2000, cursor: 'pointer', maxWidth: '320px', borderLeft: '5px solid var(--primary-red)'
@@ -31,8 +31,6 @@ export function NotificationPopup({ notification, onClose }) {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  // Zaczynamy z loading: false. Aplikacja jest gotowa od razu.
-  // Stan ładowania będzie zarządzany tylko wewnątrz funkcji `login`.
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
@@ -48,7 +46,6 @@ export const AuthProvider = ({ children }) => {
     delete api.defaults.headers.common['Authorization'];
   }, []);
 
-  // Funkcja login pozostaje asynchroniczna, ale kontekst nie wywołuje jej już sam.
   const login = useCallback(async (userToken) => {
     console.log('[AuthContext] Rozpoczęto funkcję login().');
     if (!userToken) {
@@ -79,12 +76,8 @@ export const AuthProvider = ({ children }) => {
     }
   }, [logout]);
 
-  // Usunęliśmy useEffect, który próbował logować przy starcie aplikacji.
-  // To eliminuje stan wyścigu.
-
-  // useEffect dla socket.io pozostaje bez zmian.
   useEffect(() => {
-    console.log(`[AuthContext] Uruchomiono useEffect dla socket.io. Stan: user=${user ? user.userId : 'null'}, loading=${loading}`);
+    console.log(`[AuthContext] Uruchomiono useEffect dla socket.io. Stan: user=${user ? user.user_id : 'null'}, loading=${loading}`);
     if (user && !loading) {
         if (!socket.connected) {
             console.log('[AuthContext] Socket.io - łączę...');
@@ -92,8 +85,9 @@ export const AuthProvider = ({ children }) => {
         }
         
         const onConnect = () => {
-            console.log('[AuthContext] Socket połączony. Rejestruję użytkownika z ID:', user.userId);
-            socket.emit('register_user', user.userId);
+            // <<< POPRAWKA: Zmieniono user.userId na user.user_id
+            console.log('[AuthContext] Socket połączony. Rejestruję użytkownika z ID:', user.user_id);
+            socket.emit('register_user', user.user_id);
         };
         
         socket.on('connect', onConnect);

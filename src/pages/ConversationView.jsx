@@ -19,7 +19,6 @@ function ConversationView() {
   };
 
   useEffect(() => {
-    // Czekamy na ID rozmowy, użytkownika i gotowy socket z kontekstu
     if (!conversationId || !user || !socket) {
         setMessages([]);
         setLoading(false);
@@ -29,7 +28,6 @@ function ConversationView() {
     setLoading(true);
     setMessages([]);
 
-    // Dołączamy do pokoju czatu używając globalnego socketa
     socket.emit('join_room', conversationId);
 
     const fetchMessages = async () => {
@@ -45,14 +43,12 @@ function ConversationView() {
     fetchMessages();
 
     const handleReceiveMessage = (message) => {
-      // Dodajemy wiadomość tylko, jeśli dotyczy tej konkretnej, otwartej rozmowy
       if (message.conversation_id.toString() === conversationId) {
         setMessages((prevMessages) => [...prevMessages, message]);
       }
     };
     socket.on('receive_message', handleReceiveMessage);
 
-    // Funkcja czyszcząca - uruchamia się, gdy użytkownik opuszcza tę stronę
     return () => {
       socket.emit('leave_room', conversationId);
       socket.off('receive_message', handleReceiveMessage);
@@ -67,7 +63,8 @@ function ConversationView() {
     
     const messageData = {
       conversation_id: conversationId,
-      sender_id: user.userId,
+      // <<< POPRAWKA: Zmieniono user.userId na user.user_id
+      sender_id: user.user_id,
       message_content: newMessage,
     };
     
@@ -85,11 +82,11 @@ function ConversationView() {
         {messages.length > 0 ? messages.map((msg, index) => (
           <div key={msg.message_id || index} style={{ 
                 display: 'flex',
-                justifyContent: msg.sender_id === user.userId ? 'flex-end' : 'flex-start',
+                justifyContent: msg.sender_id === user.user_id ? 'flex-end' : 'flex-start',
                 marginBottom: '10px'
           }}>
             <p style={{
-              backgroundColor: msg.sender_id === user.userId ? 'var(--accent-yellow)' : '#f1f0f0',
+              backgroundColor: msg.sender_id === user.user_id ? 'var(--accent-yellow)' : '#f1f0f0',
               color: '#333',
               padding: '10px 15px',
               borderRadius: '15px',
