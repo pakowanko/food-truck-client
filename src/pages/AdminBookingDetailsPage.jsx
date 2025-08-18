@@ -52,7 +52,6 @@ function AdminBookingDetailsPage() {
                     <p><strong>Lokalizacja:</strong> {booking.event_location}</p>
                     <p><strong>Liczba gości:</strong> {booking.guest_count}</p>
                     <p><strong>Typ wydarzenia:</strong> {booking.event_type}</p>
-                    {/* // <<< ZMIENIONA NAZWA POLA I ETYKIETA */}
                     <p><strong>Dodatkowe ustalenia (opłaty, media itp.):</strong> <span style={{ whiteSpace: 'pre-wrap' }}>{booking.utility_costs || 'Nie podano'}</span></p>
                 </div>
 
@@ -77,9 +76,10 @@ function AdminBookingDetailsPage() {
                     <p><strong>Status opakowań:</strong> <span style={{ color: booking.packaging_ordered ? 'green' : 'orange' }}>{booking.packaging_ordered ? 'Zamówione' : 'Brak zamówienia'}</span></p>
                 </div>
 
+                {/* // <<< POPRAWKA: Zmieniono organizer_message na event_description */}
                 <div className="details-card full-width">
-                    <h2>Wiadomość od organizatora</h2>
-                    <p className="organizer-message">{booking.organizer_message || 'Brak wiadomości.'}</p>
+                    <h2>Wiadomość od organizatora / Opis wydarzenia</h2>
+                    <p className="organizer-message">{booking.event_description || 'Brak wiadomości.'}</p>
                 </div>
             </div>
         </div>
