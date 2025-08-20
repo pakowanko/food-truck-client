@@ -80,9 +80,9 @@ function DashboardPage() {
         await api.put(`/requests/${requestId}/status`, { status: newStatus });
         if (newStatus === 'confirmed') {
             const confirmedRequest = requests.find(req => req.request_id === requestId);
-            if (confirmedRequest) {
+            if (confirmedRequest && confirmedRequest.event_start_date?._seconds) {
                 const today = new Date();
-                const eventDate = new Date(confirmedRequest.event_start_date);
+                const eventDate = new Date(confirmedRequest.event_start_date._seconds * 1000);
                 const daysUntilEvent = (eventDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
 
                 if (daysUntilEvent <= 7) {
@@ -149,14 +149,20 @@ function DashboardPage() {
   };
   
   const isRequestCompleted = (req) => {
-    const eventEndDate = req.event_end_date;
-    return new Date(eventEndDate) < new Date() && req.status === 'confirmed';
+    if (!req.event_end_date?._seconds) return false;
+    const eventEndDate = new Date(req.event_end_date._seconds * 1000);
+    return eventEndDate < new Date() && req.status === 'confirmed';
   };
 
+  // ✨ POPRAWKA: Funkcja do formatowania daty z obiektu Firestore
   const formatDateRange = (start, end) => {
-    if (!start || !end) return 'Brak daty';
-    const startDate = new Date(start).toLocaleDateString();
-    const endDate = new Date(end).toLocaleDateString();
+    // Sprawdzamy, czy obiekty daty i pole _seconds istnieją
+    if (!start?._seconds || !end?._seconds) return 'Invalid Date';
+    
+    // Tworzymy daty, mnożąc sekundy przez 1000
+    const startDate = new Date(start._seconds * 1000).toLocaleDateString('pl-PL');
+    const endDate = new Date(end._seconds * 1000).toLocaleDateString('pl-PL');
+    
     return startDate === endDate ? startDate : `${startDate} - ${endDate}`;
   };
 
@@ -264,7 +270,8 @@ function DashboardPage() {
                       <p><strong>Typ wydarzenia:</strong> {req.event_type}</p>
                       <p><strong>Liczba gości:</strong> {req.guest_count}</p>
                       <p><strong>Koszty mediów (propozycja):</strong> {req.utility_costs} zł</p>
-                      <p><strong>Opis:</strong> {req.event_description}</p>
+                      {/* ✨ POPRAWKA: Zmieniono 'event_description' na 'event_details' */}
+                      <p><strong>Opis:</strong> {req.event_details}</p>
                   </div>
                   
                   <p style={{marginTop: '15px'}}><strong>Status rezerwacji:</strong> {req.status}</p>
