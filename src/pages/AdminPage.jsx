@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
-import { Link } from 'react-router-dom'; // <<< 1. DODANY IMPORT
+import { Link } from 'react-router-dom';
 
 // --- Komponent EditUserModal (bez zmian) ---
 const EditUserModal = ({ user, onClose, onSave }) => {
@@ -63,7 +63,7 @@ const ConversationModal = ({ conversation, onClose }) => {
                         <div key={msg.message_id} style={{ marginBottom: '15px', borderBottom: '1px solid #f0f0f0', paddingBottom: '10px' }}>
                             <strong style={{color: 'var(--primary-red)'}}>{msg.sender_email}:</strong>
                             <p style={{ margin: '5px 0' }}>{msg.message_content}</p>
-                            <small style={{color: '#888'}}>{new Date(msg.created_at).toLocaleString()}</small>
+                            <small style={{color: '#888'}}>{msg.created_at?._seconds ? new Date(msg.created_at._seconds * 1000).toLocaleString('pl-PL') : 'Brak daty'}</small>
                         </div>
                     ))}
                 </div>
@@ -325,15 +325,15 @@ function AdminPage() {
                     <tbody>
                         {bookings.map(booking => (
                             <tr key={booking.request_id} style={{ borderBottom: '1px solid #ccc' }}>
-                                <td style={{ padding: '8px' }}>{booking.request_id}</td><td style={{ padding: '8px' }}>{booking.company_name}</td><td style={{ padding: '8px' }}>{new Date(booking.event_start_date).toLocaleDateString()}</td>
+                                <td style={{ padding: '8px' }}>{booking.request_id}</td><td style={{ padding: '8px' }}>{booking.company_name}</td>
+                                {/* ✨ POPRAWKA: Dodano obsługę daty z Firestore w tabeli */}
+                                <td style={{ padding: '8px' }}>{booking.event_start_date?._seconds ? new Date(booking.event_start_date._seconds * 1000).toLocaleDateString('pl-PL') : 'Brak daty'}</td>
                                 <td style={{ padding: '8px', color: bookingStatusMap[booking.status]?.color || 'black', fontWeight: 'bold' }}>{bookingStatusMap[booking.status]?.text || booking.status}</td>
                                 <td style={{ padding: '8px', color: booking.commission_paid ? 'green' : 'red', fontWeight: 'bold' }}>{booking.commission_paid ? 'Opłacona' : 'Nieopłacona'}</td>
                                 <td style={{ padding: '8px', color: booking.packaging_ordered ? 'green' : 'orange', fontWeight: 'bold' }}>{booking.packaging_ordered ? 'Zamówione' : 'Brak zamówienia'}</td>
                                  <td style={{ padding: '8px', display: 'flex', gap: '10px' }}>
                                     <button onClick={() => handleCommissionStatusChange(booking.request_id, booking.commission_paid)}>Prowizja</button>
                                     <button onClick={() => handlePackagingStatusChange(booking.request_id, booking.packaging_ordered)}>Opakowania</button>
-                                    
-                                    {/* // <<< 2. DODANY LINK DO SZCZEGÓŁÓW */}
                                     <Link to={`/admin/booking/${booking.request_id}`} style={{ padding: '0.6em 1.2em', backgroundColor: '#007bff', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '1em', fontFamily: 'inherit', border: '1px solid transparent' }}>
                                         Szczegóły
                                     </Link>

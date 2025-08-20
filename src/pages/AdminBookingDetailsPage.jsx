@@ -3,6 +3,12 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../apiConfig.js';
 import './AdminBookingDetailsPage.css';
 
+// Funkcja pomocnicza do formatowania daty, aby uniknąć powtarzania kodu
+const formatDate = (dateObject) => {
+    if (!dateObject?._seconds) return 'Invalid Date';
+    return new Date(dateObject._seconds * 1000).toLocaleDateString('pl-PL');
+};
+
 function AdminBookingDetailsPage() {
     const { requestId } = useParams();
     const [booking, setBooking] = useState(null);
@@ -47,8 +53,10 @@ function AdminBookingDetailsPage() {
             <div className="details-grid">
                 <div className="details-card">
                     <h2>Informacje o Wydarzeniu</h2>
-                    <p><strong>Data:</strong> {new Date(booking.event_start_date).toLocaleDateString()}</p>
-                    <p><strong>Godziny:</strong> {booking.event_start_time} - {booking.event_end_time}</p>
+                    {/* ✨ POPRAWKA: Użycie funkcji pomocniczej do formatowania daty */}
+                    <p><strong>Data:</strong> {formatDate(booking.event_start_date)}</p>
+                    {/* ✨ POPRAWKA: Poprawiono wyświetlanie godzin */}
+                    <p><strong>Godziny:</strong> {booking.event_time || 'Nie podano'}</p>
                     <p><strong>Lokalizacja:</strong> {booking.event_location}</p>
                     <p><strong>Liczba gości:</strong> {booking.guest_count}</p>
                     <p><strong>Typ wydarzenia:</strong> {booking.event_type}</p>
@@ -76,10 +84,10 @@ function AdminBookingDetailsPage() {
                     <p><strong>Status opakowań:</strong> <span style={{ color: booking.packaging_ordered ? 'green' : 'orange' }}>{booking.packaging_ordered ? 'Zamówione' : 'Brak zamówienia'}</span></p>
                 </div>
 
-                {/* // <<< POPRAWKA: Zmieniono organizer_message na event_description */}
                 <div className="details-card full-width">
                     <h2>Wiadomość od organizatora / Opis wydarzenia</h2>
-                    <p className="organizer-message">{booking.event_description || 'Brak wiadomości.'}</p>
+                    {/* ✨ POPRAWKA: Zmieniono 'event_description' na 'event_details' */}
+                    <p className="organizer-message">{booking.event_details || 'Brak wiadomości.'}</p>
                 </div>
             </div>
         </div>
