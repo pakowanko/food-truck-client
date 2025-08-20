@@ -137,7 +137,7 @@ function HomePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {profiles.length > 0 ? (
             profiles.map(profile => (
-              <TruckCard key={profile.doc_id} profile={profile} />
+              <TruckCard key={profile_id} profile={profile} />
             ))
           ) : (
             <p style={{textAlign: 'center'}}>Nie znaleziono żadnych food trucków pasujących do Twoich kryteriów.</p>
