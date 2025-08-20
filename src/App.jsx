@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, AuthContext, NotificationPopup } from './AuthContext.jsx';
+import { SocketProvider } from './SocketContext.jsx'; // ✨ 1. ZAIMPORTUJ SOCKETPROVIDER
 
 // Import komponentów
 import Navbar from './components/Navbar.jsx';
@@ -41,43 +42,46 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AuthProvider>
-        <Router>
-          <NotificationManager />
-          <Navbar />
-          <main>
-            <Routes>
-              {/* Trasy publiczne */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/verify-email" element={<VerifyEmailPage />} />
-              <Route path="/request-password-reset" element={<RequestPasswordResetPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/profile/:profileId" element={<TruckDetailsPage />} />
-              <Route path="/regulamin" element={<TermsPage />} />
-              <Route path="/polityka-prywatnosci" element={<PrivacyPolicyPage />} />
+        {/* ✨ 2. OWIŃ ROUTER W SOCKETPROVIDER */}
+        <SocketProvider>
+          <Router>
+            <NotificationManager />
+            <Navbar />
+            <main>
+              <Routes>
+                {/* Trasy publiczne */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/request-password-reset" element={<RequestPasswordResetPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/profile/:profileId" element={<TruckDetailsPage />} />
+                <Route path="/regulamin" element={<TermsPage />} />
+                <Route path="/polityka-prywatnosci" element={<PrivacyPolicyPage />} />
 
-              {/* Trasy chronione */}
-              <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-              <Route path="/create-profile" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
-              <Route path="/edit-profile/:profileId" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
-              <Route path="/booking/:profileId" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
-              <Route path="/my-account" element={<ProtectedRoute><MyAccountPage /></ProtectedRoute>} />
-           
-              {/* Trasy tylko dla admina */}
-              <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
-              <Route path="/admin/booking/:requestId" element={<AdminRoute><AdminBookingDetailsPage /></AdminRoute>} />
+                {/* Trasy chronione */}
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/create-profile" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
+                <Route path="/edit-profile/:profileId" element={<ProtectedRoute><CreateProfilePage /></ProtectedRoute>} />
+                <Route path="/booking/:profileId" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
+                <Route path="/my-account" element={<ProtectedRoute><MyAccountPage /></ProtectedRoute>} />
+            
+                {/* Trasy tylko dla admina */}
+                <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+                <Route path="/admin/booking/:requestId" element={<AdminRoute><AdminBookingDetailsPage /></AdminRoute>} />
 
-              {/* Zagnieżdżona trasa dla czatu */}
-              <Route path="/chat" element={<ProtectedRoute><ChatLayout /></ProtectedRoute>}>
-                <Route path=":conversationId" element={<ConversationView />} />
-              </Route>
+                {/* Zagnieżdżona trasa dla czatu */}
+                <Route path="/chat" element={<ProtectedRoute><ChatLayout /></ProtectedRoute>}>
+                  <Route path=":conversationId" element={<ConversationView />} />
+                </Route>
 
-            </Routes>
-          </main>
-          <Footer />
-          <SocialProofPopup />
-        </Router>
+              </Routes>
+            </main>
+            <Footer />
+            <SocialProofPopup />
+          </Router>
+        </SocketProvider>
       </AuthProvider>
     </GoogleOAuthProvider>
   );

@@ -1,15 +1,9 @@
 // src/pages/ChatPage.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react'; // ✨ POPRAWKA: Dodano import Hooków
 import { useParams, Link } from 'react-router-dom';
-import io from 'socket.io-client';
-// ZMIANA: Importujemy teraz instancję 'api' oraz SOCKET_URL
-import { api, SOCKET_URL } from '../apiConfig.js'; 
-
-const socket = io(SOCKET_URL, { 
-    autoConnect: false,
-    reconnection: true,
-    reconnectionAttempts: 5
-});
+import { useSocket } from '../SocketContext';
+import { api } from '../apiConfig.js';
+import { AuthContext } from '../AuthContext';
 
 function ChatPage() {
   const { conversationId } = useParams();
@@ -18,34 +12,27 @@ function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('token');
+  // Pobieramy dane użytkownika i socket z kontekstów
+  const { user } = useContext(AuthContext); // Używamy bezpośrednio useContext
+  const socket = useSocket();
   
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef(null); // Używamy bezpośrednio useRef
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Efekt do pobierania wiadomości i nasłuchiwania
   useEffect(() => {
-    if (!user || !token) {
-        setError("Musisz być zalogowany, aby kontynuować.");
-        setLoading(false);
-        return;
-    }
+    if (!socket || !user) return;
 
-    socket.connect();
+    // Dołącz do pokoju czatu
+    socket.emit('join_room', conversationId);
 
-    socket.on('connect', () => {
-        console.log(`Połączono z serwerem socket.io, id: ${socket.id}`);
-        socket.emit('join_room', conversationId);
-    });
-
-    // ZMIANA: Używamy teraz 'api' (axios) zamiast 'fetch' dla spójności
+    // Pobierz historię wiadomości
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        // Axios automatycznie dołączy token, jeśli jest ustawiony w AuthContext
         const response = await api.get(`/conversations/${conversationId}/messages`);
         setMessages(response.data);
         setError(null);
@@ -58,47 +45,53 @@ function ChatPage() {
     };
     fetchMessages();
 
-    const handleReceiveMessage = (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+    const handleNewMessage = (message) => {
+      setMessages((prevMessages) => 
+        prevMessages.some(m => m.message_id === message.message_id) 
+        ? prevMessages 
+        : [...prevMessages, message]
+      );
     };
-    socket.on('receive_message', handleReceiveMessage);
+    socket.on('newMessage', handleNewMessage);
 
-    socket.on('connect_error', (err) => {
-        console.error('Błąd połączenia z Socket.IO:', err);
-        setError('Nie można połączyć się z serwerem czatu.');
-    });
-
+    // Sprzątanie po wyjściu z komponentu
     return () => {
-      console.log("Sprzątanie komponentu czatu. Rozłączanie...");
-      socket.off('connect');
-      socket.off('receive_message', handleReceiveMessage);
-      socket.off('connect_error');
-      socket.disconnect();
+      socket.emit('leave_room', conversationId);
+      socket.off('newMessage', handleNewMessage);
     };
-  }, [conversationId, token, user?.userId]);
+  }, [conversationId, socket, user]);
 
+  // Efekt do przewijania na dół
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim() === '' || !user) return;
 
     const messageData = {
-      conversation_id: conversationId,
       sender_id: user.userId,
       message_content: newMessage,
     };
-
-    socket.emit('send_message', messageData);
+    
+    const tempId = `temp_${Date.now()}`;
+    setMessages(prev => [...prev, { ...messageData, message_id: tempId, isOptimistic: true }]);
     setNewMessage('');
+    
+    try {
+      await api.post(`/conversations/${conversationId}/messages`, messageData);
+    } catch (err) {
+      console.error('Błąd wysyłania wiadomości:', err);
+      setMessages(prev => prev.filter(m => m.message_id !== tempId));
+      setError("Nie udało się wysłać wiadomości.");
+    }
   };
 
   if (loading) return <p>Ładowanie czatu...</p>;
   if (error) return <p style={{color: 'red'}}>Błąd: {error}</p>;
 
-  // Reszta komponentu JSX pozostaje bez zmian
+  // Reszta komponentu JSX (bez zmian)
   return (
     <div style={{ maxWidth: '800px', margin: '20px auto', padding: '20px', fontFamily: 'sans-serif', border: '1px solid #eee', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
       <nav style={{ marginBottom: '20px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
@@ -107,29 +100,10 @@ function ChatPage() {
         </Link>
       </nav>
       <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>Rozmowa</h1>
-      <div className="message-list" style={{ 
-            height: '60vh', 
-            overflowY: 'scroll', 
-            border: '1px solid #ccc', 
-            padding: '10px 20px', 
-            borderRadius: '8px', 
-            marginBottom: '10px',
-            display: 'flex',
-            flexDirection: 'column'
-      }}>
-        {messages.length > 0 ? messages.map((msg, index) => (
-          <div key={msg.message_id || index} style={{ 
-                alignSelf: msg.sender_id === user.userId ? 'flex-end' : 'flex-start',
-                maxWidth: '70%',
-                marginBottom: '10px'
-          }}>
-            <p style={{
-              backgroundColor: msg.sender_id === user.userId ? '#dcf8c6' : '#f1f0f0',
-              padding: '10px 15px',
-              borderRadius: '15px',
-              margin: 0,
-              wordWrap: 'break-word'
-            }}>
+      <div className="message-list" style={{ height: '60vh', overflowY: 'scroll', border: '1px solid #ccc', padding: '10px 20px', borderRadius: '8px', marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
+        {messages.length > 0 ? messages.map((msg) => (
+          <div key={msg.message_id} style={{ alignSelf: msg.sender_id === user.userId ? 'flex-end' : 'flex-start', maxWidth: '70%', marginBottom: '10px', opacity: msg.isOptimistic ? 0.6 : 1 }}>
+            <p style={{ backgroundColor: msg.sender_id === user.userId ? '#dcf8c6' : '#f1f0f0', padding: '10px 15px', borderRadius: '15px', margin: 0, wordWrap: 'break-word' }}>
               {msg.message_content}
             </p>
           </div>
@@ -137,27 +111,8 @@ function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
       <form onSubmit={handleSendMessage} style={{ display: 'flex' }}>
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          style={{ 
-            flex: 1, 
-            padding: '12px', 
-            borderRadius: '20px', 
-            border: '1px solid #ccc',
-            marginRight: '10px'
-          }}
-          placeholder="Wpisz wiadomość..."
-        />
-        <button type="submit" style={{ 
-            padding: '12px 20px', 
-            borderRadius: '20px', 
-            border: 'none', 
-            backgroundColor: '#007bff', 
-            color: 'white', 
-            cursor: 'pointer' 
-        }}>Wyślij</button>
+        <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '20px', border: '1px solid #ccc', marginRight: '10px' }} placeholder="Wpisz wiadomość..." />
+        <button type="submit" style={{ padding: '12px 20px', borderRadius: '20px', border: 'none', backgroundColor: '#007bff', color: 'white', cursor: 'pointer' }}>Wyślij</button>
       </form>
     </div>
   );
