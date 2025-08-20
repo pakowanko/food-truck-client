@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../apiConfig.js';
 import './AdminBookingDetailsPage.css';
 
-// Funkcja pomocnicza do formatowania daty, aby uniknąć powtarzania kodu
+// Funkcja pomocnicza do formatowania daty
 const formatDate = (dateObject) => {
     if (!dateObject?._seconds) return 'Invalid Date';
     return new Date(dateObject._seconds * 1000).toLocaleDateString('pl-PL');
@@ -53,9 +53,9 @@ function AdminBookingDetailsPage() {
             <div className="details-grid">
                 <div className="details-card">
                     <h2>Informacje o Wydarzeniu</h2>
-                    {/* ✨ POPRAWKA: Użycie funkcji pomocniczej do formatowania daty */}
+                    {/* ✨ POPRAWKA 1: Użycie funkcji pomocniczej do formatowania daty */}
                     <p><strong>Data:</strong> {formatDate(booking.event_start_date)}</p>
-                    {/* ✨ POPRAWKA: Poprawiono wyświetlanie godzin */}
+                    {/* ✨ POPRAWKA 2: Poprawiono wyświetlanie godzin */}
                     <p><strong>Godziny:</strong> {booking.event_time || 'Nie podano'}</p>
                     <p><strong>Lokalizacja:</strong> {booking.event_location}</p>
                     <p><strong>Liczba gości:</strong> {booking.guest_count}</p>
@@ -86,7 +86,7 @@ function AdminBookingDetailsPage() {
 
                 <div className="details-card full-width">
                     <h2>Wiadomość od organizatora / Opis wydarzenia</h2>
-                    {/* ✨ POPRAWKA: Zmieniono 'event_description' na 'event_details' */}
+                    {/* ✨ POPRAWKA 3: Zmieniono 'event_description' na 'event_details' */}
                     <p className="organizer-message">{booking.event_details || 'Brak wiadomości.'}</p>
                 </div>
             </div>
