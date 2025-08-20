@@ -1,19 +1,5 @@
-// src/components/TruckCard.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-
-// --- ZMIANA: Komponent gwiazdek został zakomentowany ---
-/*
-const StarRatingDisplay = ({ rating, count }) => {
-    if (count === 0) return <small style={{ color: '#6c757d' }}>Brak opinii</small>;
-    const totalStars = 5;
-    let stars = [];
-    for (let i = 1; i <= totalStars; i++) {
-        stars.push(<span key={i} style={{ color: i <= rating ? '#ffc107' : '#e0e0e0', fontSize: '1.2rem' }}>★</span>);
-    }
-    return <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{stars} <span style={{ color: '#6c757d', fontSize: '0.9rem' }}>({count})</span></div>;
-};
-*/
 
 const styles = {
     card: {
@@ -58,14 +44,12 @@ const styles = {
 };
 
 const TruckCard = ({ profile }) => {
-  // Bierzemy 3 pierwsze dania jako podsumowanie oferty
   const offerSummary = profile.offer?.dishes?.slice(0, 3).join(', ') || 'Różnorodna kuchnia';
-  
-  // Poprawiamy obsługę obrazka
   const imageUrl = profile.profile_image_url || `https://placehold.co/400x250/F0AD4E/343A40?text=${encodeURIComponent(profile.food_truck_name)}`;
 
   return (
-    <Link to={`/profile/${profile.profile_id}`} style={styles.card}>
+    // ✨ POPRAWKA: Używamy `profile.doc_id` do tworzenia linku, a nie profile_id
+    <Link to={`/profile/${profile.doc_id}`} style={styles.card}>
       <img 
         src={imageUrl} 
         alt={profile.food_truck_name} 
@@ -73,8 +57,6 @@ const TruckCard = ({ profile }) => {
       />
       <div style={styles.cardBody}>
         <h3 style={styles.cardTitle}>{profile.food_truck_name}</h3>
-        {/* --- ZMIANA: Wywołanie komponentu gwiazdek zostało zakomentowane --- */}
-        {/* <StarRatingDisplay rating={profile.average_rating} count={profile.review_count} /> */}
         <p style={styles.cardText}>
           <strong>Główne dania:</strong> {offerSummary}{profile.offer?.dishes?.length > 3 ? '...' : ''}
         </p>
