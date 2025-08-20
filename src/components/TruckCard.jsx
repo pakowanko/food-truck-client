@@ -48,8 +48,7 @@ const TruckCard = ({ profile }) => {
   const imageUrl = profile.profile_image_url || `https://placehold.co/400x250/F0AD4E/343A40?text=${encodeURIComponent(profile.food_truck_name)}`;
 
   return (
-    // ✨ POPRAWKA: Używamy `profile.doc_id` do tworzenia linku, a nie profile_id
-    <Link to={`/profile/${profile.doc_id}`} style={styles.card}>
+    <Link to={`/profile/${profile_id}`} style={styles.card}>
       <img 
         src={imageUrl} 
         alt={profile.food_truck_name} 
