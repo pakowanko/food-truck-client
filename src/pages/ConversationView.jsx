@@ -49,18 +49,28 @@ function ConversationView() {
 
     const handleNewMessage = (message) => {
       setMessages((prevMessages) => {
-        // ✨ POPRAWKA: Poprawiona logika do obsługi wiadomości przychodzących
-        // Jeśli to wiadomość od nas, znajdź wersję optymistyczną i ją podmień.
-        if (Number(message.sender_id) === Number(user.userId)) {
-          return prevMessages.map(m => 
-            m.isOptimistic && m.message_content === message.message_content ? message : m
-          );
-        } else {
-          // Jeśli to wiadomość od kogoś innego, dodaj ją, jeśli jeszcze jej nie ma.
-          return prevMessages.some(m => m.message_id === message.message_id) 
-            ? prevMessages 
-            : [...prevMessages, message];
+        // ✨ POPRAWKA: Ulepszona logika obsługi wiadomości przychodzących
+        const isMyMessage = String(message.sender_id) === String(user.userId);
+
+        // Jeśli to moja wiadomość wracająca z serwera
+        if (isMyMessage) {
+          // Znajdź i zamień wersję optymistyczną (tymczasową)
+          const optimisticIndex = prevMessages.findIndex(m => m.isOptimistic && m.message_content === message.message_content);
+          if (optimisticIndex > -1) {
+            const newMessages = [...prevMessages];
+            newMessages[optimisticIndex] = message;
+            return newMessages;
+          }
         }
+        
+        // Dla wiadomości od innych lub jeśli nie znaleziono wersji optymistycznej,
+        // dodaj wiadomość tylko wtedy, gdy jej jeszcze nie ma.
+        if (!prevMessages.some(m => m.message_id === message.message_id)) {
+          return [...prevMessages, message];
+        }
+
+        // W przeciwnym razie (to duplikat), zwróć stan bez zmian
+        return prevMessages;
       });
     };
     socket.on('newMessage', handleNewMessage);
@@ -110,13 +120,13 @@ function ConversationView() {
         {messages.length > 0 ? messages.map((msg, index) => (
           <div key={msg.message_id || index} style={{ 
                 display: 'flex',
-                // ✨ POPRAWKA: Używamy bezpiecznego porównania Number()
-                justifyContent: Number(msg.sender_id) === Number(user.userId) ? 'flex-end' : 'flex-start',
+                // ✨ POPRAWKA: Używamy bezpiecznego porównania String()
+                justifyContent: String(msg.sender_id) === String(user.userId) ? 'flex-end' : 'flex-start',
                 marginBottom: '10px',
                 opacity: msg.isOptimistic ? 0.6 : 1
           }}>
             <p style={{
-              backgroundColor: Number(msg.sender_id) === Number(user.userId) ? 'var(--accent-yellow)' : '#f1f0f0',
+              backgroundColor: String(msg.sender_id) === String(user.userId) ? 'var(--accent-yellow)' : '#f1f0f0',
               color: '#333',
               padding: '10px 15px',
               borderRadius: '15px',
