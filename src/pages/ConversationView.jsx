@@ -4,12 +4,12 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../apiConfig.js';
 import { AuthContext } from '../AuthContext.jsx';
-import { useSocket } from '../SocketContext'; // Upewnij się, że ten import jest poprawny
+import { useSocket } from '../SocketContext';
 
 function ConversationView() {
   const { conversationId } = useParams();
   const { user } = useContext(AuthContext);
-  const socket = useSocket(); // Używamy hooka z SocketContext
+  const socket = useSocket();
   
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,6 @@ function ConversationView() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Efekt do pobierania wiadomości i nasłuchiwania na nowe
   useEffect(() => {
     if (!conversationId || !user || !socket) {
         setMessages([]);
@@ -48,10 +47,15 @@ function ConversationView() {
     fetchMessages();
 
     const handleNewMessage = (message) => {
-      setMessages((prevMessages) => {
-        // ✨ POPRAWKA: Ulepszona logika obsługi wiadomości przychodzących
-        const isMyMessage = String(message.sender_id) === String(user.userId);
+      // ✨ KROK 1: Logowanie diagnostyczne
+      console.log("--- Otrzymano nową wiadomość ---");
+      console.log("Dane wiadomości z serwera:", message);
+      console.log("Dane zalogowanego użytkownika (z kontekstu):", user);
+      
+      const isMyMessage = String(message.sender_id) === String(user.userId);
+      console.log(`Czy to moja wiadomość? Porównanie ${message.sender_id} === ${user.userId} -> Wynik: ${isMyMessage}`);
 
+      setMessages((prevMessages) => {
         // Jeśli to moja wiadomość wracająca z serwera
         if (isMyMessage) {
           // Znajdź i zamień wersję optymistyczną (tymczasową)
@@ -69,7 +73,6 @@ function ConversationView() {
           return [...prevMessages, message];
         }
 
-        // W przeciwnym razie (to duplikat), zwróć stan bez zmian
         return prevMessages;
       });
     };
@@ -93,6 +96,7 @@ function ConversationView() {
     
     const tempId = `temp_${Date.now()}`;
     const optimisticMessage = {
+      // ✨ KROK 2: Używamy poprawnej nazwy 'user.userId'
       sender_id: user.userId,
       message_content: newMessage,
       message_id: tempId,
@@ -120,7 +124,7 @@ function ConversationView() {
         {messages.length > 0 ? messages.map((msg, index) => (
           <div key={msg.message_id || index} style={{ 
                 display: 'flex',
-                // ✨ POPRAWKA: Używamy bezpiecznego porównania String()
+                // ✨ KROK 3: Używamy bezpiecznego porównania String() i poprawnej nazwy 'user.userId'
                 justifyContent: String(msg.sender_id) === String(user.userId) ? 'flex-end' : 'flex-start',
                 marginBottom: '10px',
                 opacity: msg.isOptimistic ? 0.6 : 1
