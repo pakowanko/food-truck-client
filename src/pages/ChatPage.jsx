@@ -1,5 +1,6 @@
-// src/pages/ChatPage.jsx
-import React, { useState, useEffect, useRef, useContext } from 'react'; // ✨ POPRAWKA: Dodano import Hooków
+// plik: /src/pages/ChatPage.jsx
+
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSocket } from '../SocketContext';
 import { api } from '../apiConfig.js';
@@ -12,24 +13,20 @@ function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Pobieramy dane użytkownika i socket z kontekstów
-  const { user } = useContext(AuthContext); // Używamy bezpośrednio useContext
+  const { user } = useContext(AuthContext);
   const socket = useSocket();
-  
-  const messagesEndRef = useRef(null); // Używamy bezpośrednio useRef
+  const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Efekt do pobierania wiadomości i nasłuchiwania
+  // Efekt do pobierania wiadomości i nasłuchiwania na nowe
   useEffect(() => {
-    if (!socket || !user) return;
+    if (!socket || !user || !conversationId) return;
 
-    // Dołącz do pokoju czatu
     socket.emit('join_room', conversationId);
 
-    // Pobierz historię wiadomości
     const fetchMessages = async () => {
       setLoading(true);
       try {
@@ -46,6 +43,7 @@ function ChatPage() {
     fetchMessages();
 
     const handleNewMessage = (message) => {
+      // Dodajemy nową wiadomość tylko jeśli jej jeszcze nie ma (zapobiega duplikatom z optimistic UI)
       setMessages((prevMessages) => 
         prevMessages.some(m => m.message_id === message.message_id) 
         ? prevMessages 
@@ -54,14 +52,13 @@ function ChatPage() {
     };
     socket.on('newMessage', handleNewMessage);
 
-    // Sprzątanie po wyjściu z komponentu
     return () => {
       socket.emit('leave_room', conversationId);
       socket.off('newMessage', handleNewMessage);
     };
   }, [conversationId, socket, user]);
 
-  // Efekt do przewijania na dół
+  // Efekt do przewijania na dół po otrzymaniu nowej wiadomości
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -71,18 +68,29 @@ function ChatPage() {
     if (newMessage.trim() === '' || !user) return;
 
     const messageData = {
-      sender_id: user.userId,
+      // Backend oczekuje 'message_content'
       message_content: newMessage,
     };
     
+    // Optymistyczne UI: natychmiast dodaj wiadomość do widoku
     const tempId = `temp_${Date.now()}`;
-    setMessages(prev => [...prev, { ...messageData, message_id: tempId, isOptimistic: true }]);
+    const optimisticMessage = {
+      sender_id: user.userId,
+      message_content: newMessage,
+      message_id: tempId,
+      isOptimistic: true
+    };
+    setMessages(prev => [...prev, optimisticMessage]);
     setNewMessage('');
     
     try {
+      // ✨ KLUCZOWA ZMIANA: Wysyłamy wiadomość przez HTTP POST do naszego API
       await api.post(`/conversations/${conversationId}/messages`, messageData);
+      // Po pomyślnym wysłaniu, serwer roześle wiadomość przez Socket.IO do wszystkich,
+      // a nasz listener `handleNewMessage` zaktualizuje jej status (usunie flagę 'isOptimistic')
     } catch (err) {
       console.error('Błąd wysyłania wiadomości:', err);
+      // Jeśli wystąpił błąd, usuń tymczasową wiadomość z UI
       setMessages(prev => prev.filter(m => m.message_id !== tempId));
       setError("Nie udało się wysłać wiadomości.");
     }
@@ -91,7 +99,6 @@ function ChatPage() {
   if (loading) return <p>Ładowanie czatu...</p>;
   if (error) return <p style={{color: 'red'}}>Błąd: {error}</p>;
 
-  // Reszta komponentu JSX (bez zmian)
   return (
     <div style={{ maxWidth: '800px', margin: '20px auto', padding: '20px', fontFamily: 'sans-serif', border: '1px solid #eee', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
       <nav style={{ marginBottom: '20px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
