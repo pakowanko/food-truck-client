@@ -47,26 +47,32 @@ function ConversationView() {
     };
     fetchMessages();
 
-    // ✨ POPRAWKA: Nasłuchujemy na poprawne zdarzenie 'newMessage'
     const handleNewMessage = (message) => {
-      setMessages((prevMessages) => 
-        prevMessages.some(m => m.message_id === message.message_id) 
-        ? prevMessages 
-        : [...prevMessages, message]
-      );
+      setMessages((prevMessages) => {
+        // ✨ POPRAWKA: Poprawiona logika do obsługi wiadomości przychodzących
+        // Jeśli to wiadomość od nas, znajdź wersję optymistyczną i ją podmień.
+        if (Number(message.sender_id) === Number(user.userId)) {
+          return prevMessages.map(m => 
+            m.isOptimistic && m.message_content === message.message_content ? message : m
+          );
+        } else {
+          // Jeśli to wiadomość od kogoś innego, dodaj ją, jeśli jeszcze jej nie ma.
+          return prevMessages.some(m => m.message_id === message.message_id) 
+            ? prevMessages 
+            : [...prevMessages, message];
+        }
+      });
     };
     socket.on('newMessage', handleNewMessage);
 
     return () => {
       socket.emit('leave_room', conversationId);
-      // ✨ POPRAWKA: Wyrejestrowujemy listener z poprawnego zdarzenia
       socket.off('newMessage', handleNewMessage);
     };
   }, [conversationId, user, socket]);
 
   useEffect(scrollToBottom, [messages]);
 
-  // ✨ POPRAWKA: Zastępujemy całą funkcję handleSendMessage nową, poprawną wersją
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim() === '' || !user) return;
@@ -75,7 +81,6 @@ function ConversationView() {
       message_content: newMessage,
     };
     
-    // Optymistyczne UI
     const tempId = `temp_${Date.now()}`;
     const optimisticMessage = {
       sender_id: user.userId,
@@ -87,7 +92,6 @@ function ConversationView() {
     setNewMessage('');
     
     try {
-      // Wysyłamy wiadomość przez HTTP POST
       await api.post(`/conversations/${conversationId}/messages`, messageData);
     } catch (err) {
       console.error('Błąd wysyłania wiadomości:', err);
@@ -106,13 +110,13 @@ function ConversationView() {
         {messages.length > 0 ? messages.map((msg, index) => (
           <div key={msg.message_id || index} style={{ 
                 display: 'flex',
-                // ✨ POPRAWKA: Używamy user.userId z kontekstu do porównania
-                justifyContent: msg.sender_id === user.userId ? 'flex-end' : 'flex-start',
+                // ✨ POPRAWKA: Używamy bezpiecznego porównania Number()
+                justifyContent: Number(msg.sender_id) === Number(user.userId) ? 'flex-end' : 'flex-start',
                 marginBottom: '10px',
                 opacity: msg.isOptimistic ? 0.6 : 1
           }}>
             <p style={{
-              backgroundColor: msg.sender_id === user.userId ? 'var(--accent-yellow)' : '#f1f0f0',
+              backgroundColor: Number(msg.sender_id) === Number(user.userId) ? 'var(--accent-yellow)' : '#f1f0f0',
               color: '#333',
               padding: '10px 15px',
               borderRadius: '15px',
