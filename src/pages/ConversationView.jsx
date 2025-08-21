@@ -47,18 +47,11 @@ function ConversationView() {
     fetchMessages();
 
     const handleNewMessage = (message) => {
-      // ✨ KROK 1: Logowanie diagnostyczne
-      console.log("--- Otrzymano nową wiadomość ---");
-      console.log("Dane wiadomości z serwera:", message);
-      console.log("Dane zalogowanego użytkownika (z kontekstu):", user);
-      
-      const isMyMessage = String(message.sender_id) === String(user.userId);
-      console.log(`Czy to moja wiadomość? Porównanie ${message.sender_id} === ${user.userId} -> Wynik: ${isMyMessage}`);
-
       setMessages((prevMessages) => {
-        // Jeśli to moja wiadomość wracająca z serwera
+        // ✨ OSTATECZNA POPRAWKA: Używamy poprawnej nazwy pola 'user.user_id'
+        const isMyMessage = String(message.sender_id) === String(user.user_id);
+
         if (isMyMessage) {
-          // Znajdź i zamień wersję optymistyczną (tymczasową)
           const optimisticIndex = prevMessages.findIndex(m => m.isOptimistic && m.message_content === message.message_content);
           if (optimisticIndex > -1) {
             const newMessages = [...prevMessages];
@@ -67,8 +60,6 @@ function ConversationView() {
           }
         }
         
-        // Dla wiadomości od innych lub jeśli nie znaleziono wersji optymistycznej,
-        // dodaj wiadomość tylko wtedy, gdy jej jeszcze nie ma.
         if (!prevMessages.some(m => m.message_id === message.message_id)) {
           return [...prevMessages, message];
         }
@@ -96,8 +87,8 @@ function ConversationView() {
     
     const tempId = `temp_${Date.now()}`;
     const optimisticMessage = {
-      // ✨ KROK 2: Używamy poprawnej nazwy 'user.userId'
-      sender_id: user.userId,
+      // ✨ OSTATECZNA POPRAWKA: Używamy poprawnej nazwy 'user.user_id'
+      sender_id: user.user_id,
       message_content: newMessage,
       message_id: tempId,
       isOptimistic: true
@@ -124,13 +115,13 @@ function ConversationView() {
         {messages.length > 0 ? messages.map((msg, index) => (
           <div key={msg.message_id || index} style={{ 
                 display: 'flex',
-                // ✨ KROK 3: Używamy bezpiecznego porównania String() i poprawnej nazwy 'user.userId'
-                justifyContent: String(msg.sender_id) === String(user.userId) ? 'flex-end' : 'flex-start',
+                // ✨ OSTATECZNA POPRAWKA: Używamy bezpiecznego porównania i poprawnej nazwy 'user.user_id'
+                justifyContent: String(msg.sender_id) === String(user.user_id) ? 'flex-end' : 'flex-start',
                 marginBottom: '10px',
                 opacity: msg.isOptimistic ? 0.6 : 1
           }}>
             <p style={{
-              backgroundColor: String(msg.sender_id) === String(user.userId) ? 'var(--accent-yellow)' : '#f1f0f0',
+              backgroundColor: String(msg.sender_id) === String(user.user_id) ? 'var(--accent-yellow)' : '#f1f0f0',
               color: '#333',
               padding: '10px 15px',
               borderRadius: '15px',
