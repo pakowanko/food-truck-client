@@ -40,7 +40,7 @@ const EditUserModal = ({ user, onClose, onSave }) => {
     );
 };
 
-// --- Inne modale (bez zmian) ---
+// --- Komponent ConversationModal (bez zmian) ---
 const ConversationModal = ({ conversation, onClose }) => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -74,6 +74,8 @@ const ConversationModal = ({ conversation, onClose }) => {
         </div>
     );
 };
+
+// --- Komponent EditProfileDetailsModal (z poprawkami) ---
 const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
     const [formData, setFormData] = useState({ food_truck_description: '', base_location: '', operation_radius_km: '' });
     const [gallery, setGallery] = useState([]);
@@ -82,18 +84,21 @@ const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
         const fetchProfileDetails = async () => {
             setLoading(true);
             try {
-                const { data } = await api.get(`/admin/profiles/${profile.profile_id}`);
+                // ✨ POPRAWKA: Używamy doc_id do pobrania szczegółów
+                const { data } = await api.get(`/admin/profiles/${profile.doc_id}`);
                 setFormData({ food_truck_description: data.food_truck_description || '', base_location: data.base_location || '', operation_radius_km: data.operation_radius_km || '' });
                 setGallery(data.gallery_photo_urls || []);
             } catch (error) { console.error("Błąd pobierania szczegółów profilu", error); alert("Nie udało się wczytać danych profilu."); }
             finally { setLoading(false); }
         };
         fetchProfileDetails();
-    }, [profile.profile_id]);
+    }, [profile.doc_id]);
+
     const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleSave = async () => {
         try {
-            await api.put(`/admin/profiles/${profile.profile_id}/details`, formData);
+            // ✨ POPRAWKA: Używamy doc_id do zapisu
+            await api.put(`/admin/profiles/${profile.doc_id}/details`, formData);
             alert("Zmiany zostały zapisane!");
             onSave();
         } catch (error) { alert(error.response?.data?.message || "Nie udało się zapisać zmian."); }
@@ -101,7 +106,8 @@ const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
     const handleDeletePhoto = async (photoUrl) => {
         if (window.confirm("Czy na pewno chcesz usunąć to zdjęcie?")) {
             try {
-                await api.delete(`/admin/profiles/${profile.profile_id}/photo`, { data: { photoUrl } });
+                // ✨ POPRAWKA: Używamy doc_id do usunięcia zdjęcia
+                await api.delete(`/admin/profiles/${profile.doc_id}/photo`, { data: { photoUrl } });
                 setGallery(prev => prev.filter(url => url !== photoUrl));
                 alert("Zdjęcie usunięte.");
             } catch (error) { alert("Nie udało się usunąć zdjęcia."); }
@@ -140,6 +146,8 @@ const EditProfileDetailsModal = ({ profile, onClose, onSave }) => {
         </div>
     );
 };
+
+// --- Komponent ManageProfilesModal (z poprawkami) ---
 const ManageProfilesModal = ({ user, onClose }) => {
     const [profiles, setProfiles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -147,16 +155,19 @@ const ManageProfilesModal = ({ user, onClose }) => {
     const fetchProfiles = async () => {
         setLoading(true);
         try {
-            const { data } = await api.get(`/admin/users/${user.user_id}/profiles`);
+            // ✨ POPRAWKA: Używamy doc_id do pobrania profili
+            const { data } = await api.get(`/admin/users/${user.doc_id}/profiles`);
             setProfiles(data);
         } catch (error) { console.error("Błąd pobierania profili", error); }
         finally { setLoading(false); }
     };
-    useEffect(() => { fetchProfiles(); }, [user.user_id]);
-    const handleDeleteProfile = async (profileId) => {
+    useEffect(() => { fetchProfiles(); }, [user.doc_id]);
+
+    const handleDeleteProfile = async (profileDocId) => {
         if (window.confirm("Czy na pewno chcesz usunąć ten profil food trucka? Tej operacji nie można cofnąć.")) {
             try {
-                await api.delete(`/admin/profiles/${profileId}`);
+                // ✨ POPRAWKA: Używamy doc_id do usunięcia profilu
+                await api.delete(`/admin/profiles/${profileDocId}`);
                 fetchProfiles();
             } catch (error) { alert("Nie udało się usunąć profilu."); }
         }
@@ -173,11 +184,13 @@ const ManageProfilesModal = ({ user, onClose }) => {
                                 <thead><tr><th style={{textAlign: 'left', padding: '8px'}}>Nazwa Food Trucka</th><th style={{textAlign: 'left', padding: '8px'}}>Akcje</th></tr></thead>
                                 <tbody>
                                     {profiles.length > 0 ? profiles.map(p => (
-                                        <tr key={p.profile_id}>
+                                        // ✨ POPRAWKA: Używamy doc_id jako klucza
+                                        <tr key={p.doc_id}>
                                             <td style={{padding: '8px', borderTop: '1px solid #eee'}}>{p.food_truck_name} (ID: {p.profile_id})</td>
                                             <td style={{padding: '8px', borderTop: '1px solid #eee', display: 'flex', gap: '5px'}}>
                                                 <button onClick={() => setEditingProfile(p)}>Edytuj szczegóły</button>
-                                                <button onClick={() => handleDeleteProfile(p.profile_id)} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
+                                                {/* ✨ POPRAWKA: Przekazujemy doc_id do funkcji usuwającej */}
+                                                <button onClick={() => handleDeleteProfile(p.doc_id)} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
                                             </td>
                                         </tr>
                                     )) : <tr><td colSpan="2"><p>Ten użytkownik nie ma jeszcze żadnych profili.</p></td></tr>}
@@ -236,8 +249,12 @@ function AdminPage() {
 
     useEffect(() => { fetchData(); }, []);
 
-    const handleToggleBlock = async (userId) => {
-        try { await api.put(`/admin/users/${userId}/toggle-block`); fetchData(); }
+    const handleToggleBlock = async (userDocId) => {
+        try { 
+            // ✨ POPRAWKA: Używamy doc_id
+            await api.put(`/admin/users/${userDocId}/toggle-block`); 
+            fetchData(); 
+        }
         catch (err) { alert('Nie udało się zaktualizować użytkownika.'); }
     };
     const handlePackagingStatusChange = async (requestId, currentStatus) => {
@@ -249,17 +266,28 @@ function AdminPage() {
         catch (err) { alert('Nie udało się zaktualizować statusu prowizji.'); }
     };
     const openEditModal = (userToEdit) => { setEditingUser(userToEdit); setIsEditModalOpen(true); };
+    
     const handleUserUpdate = async (updatedUserData) => {
         try {
-            await api.put(`/admin/users/${updatedUserData.user_id}`, updatedUserData);
+            // ✨ POPRAWKA: Używamy doc_id
+            await api.put(`/admin/users/${updatedUserData.doc_id}`, updatedUserData);
             setIsEditModalOpen(false); setEditingUser(null); fetchData();
         } catch (err) { alert('Nie udało się zaktualizować użytkownika.'); }
     };
-    const handleDeleteUser = async (userIdToDelete) => {
-        if (userIdToDelete === user.userId) { alert("Nie możesz usunąć własnego konta."); return; }
+
+    const handleDeleteUser = async (userDocId) => {
+        // ✨ POPRAWKA: Porównujemy docId, a nie numeryczne userId
+        if (userDocId === user.docId) { 
+            alert("Nie możesz usunąć własnego konta."); 
+            return; 
+        }
         const confirmation = window.confirm("Czy na pewno chcesz trwale usunąć tego użytkownika i wszystkie jego dane? Tej operacji nie można cofnąć.");
         if (confirmation) {
-            try { await api.delete(`/admin/users/${userIdToDelete}`); fetchData(); }
+            try { 
+                // ✨ POPRAWKA: Używamy doc_id
+                await api.delete(`/admin/users/${userDocId}`); 
+                fetchData(); 
+            }
             catch (err) { alert('Nie udało się usunąć użytkownika.'); }
         }
     };
@@ -299,15 +327,17 @@ function AdminPage() {
                     </thead>
                     <tbody>
                         {users.map(u => (
-                            <tr key={u.user_id} style={{ borderBottom: '1px solid #ccc' }}>
+                            // ✨ POPRAWKA: Używamy doc_id jako unikalnego klucza
+                            <tr key={u.doc_id} style={{ borderBottom: '1px solid #ccc' }}>
                                 <td style={{ padding: '8px' }}>{u.user_id}</td><td style={{ padding: '8px' }}>{u.email}</td>
                                 <td style={{ padding: '8px' }}>{u.role === 'admin' ? <strong>Admin</strong> : (userTypeMap[u.user_type] || u.user_type)}</td>
                                 <td style={{ padding: '8px', color: u.is_blocked ? 'red' : 'green' }}>{u.is_blocked ? 'Zablokowany' : 'Aktywny'}</td>
                                 <td style={{ padding: '8px', textAlign: 'center' }}>{u.user_type === 'food_truck_owner' ? u.profile_count : 'N/A'}</td>
                                 <td style={{ padding: '8px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    <button onClick={() => handleToggleBlock(u.user_id)} disabled={u.user_id === user.userId}>{u.is_blocked ? 'Odblokuj' : 'Zablokuj'}</button>
+                                    {/* ✨ POPRAWKA: Przekazujemy doc_id do wszystkich funkcji akcji */}
+                                    <button onClick={() => handleToggleBlock(u.doc_id)} disabled={u.doc_id === user.docId}>{u.is_blocked ? 'Odblokuj' : 'Zablokuj'}</button>
                                     <button onClick={() => openEditModal(u)}>Edytuj</button>
-                                    <button onClick={() => handleDeleteUser(u.user_id)} disabled={u.user_id === user.userId} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
+                                    <button onClick={() => handleDeleteUser(u.doc_id)} disabled={u.doc_id === user.docId} style={{backgroundColor: '#dc3545', color: 'white'}}>Usuń</button>
                                     {u.user_type === 'food_truck_owner' && (<button onClick={() => setManagingUser(u)}>Zarządzaj profilami</button>)}
                                 </td>
                             </tr>
