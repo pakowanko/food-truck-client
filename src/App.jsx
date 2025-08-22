@@ -59,6 +59,7 @@ function App() {
                 <Route path="/profile/:profileId" element={<TruckDetailsPage />} />
                 <Route path="/regulamin" element={<TermsPage />} />
                 <Route path="/polityka-prywatnosci" element={<PrivacyPolicyPage />} />
+                <Route path="/login-with-token" element={<LoginWithTokenPage />} />
 
                 {/* Trasy chronione */}
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
