@@ -13,11 +13,11 @@ function LoginWithTokenPage() {
 
   useEffect(() => {
     const processTokenLogin = async () => {
-      // Pobieramy token z adresu URL
+      // Pobieramy token i ewentualne przekierowanie z adresu URL
       const params = new URLSearchParams(location.search);
       const token = params.get('token');
+      const redirectPath = params.get('redirect');
 
-      // ✨ POPRAWKA: Dodano brakujące klamry {}
       if (!token) {
         setStatus('Błąd: Brak tokena w adresie URL.');
         return;
@@ -28,11 +28,11 @@ function LoginWithTokenPage() {
         const response = await api.post('/auth/login-with-token', { token });
         
         if (response.data.success && response.data.token) {
-          // Jeśli logowanie się udało, zapisujemy nowy token i przekierowujemy
+          // Jeśli logowanie się udało, zapisujemy nowy token
           login(response.data.token);
           setStatus('Zalogowano pomyślnie! Przekierowywanie...');
-          // Przekierowujemy do miejsca wskazanego przez backend lub domyślnie do /dashboard
-          navigate(response.data.redirect || '/dashboard');
+          // Przekierowujemy do miejsca wskazanego w linku lub domyślnie do panelu
+          navigate(redirectPath || response.data.redirect || '/dashboard');
         } else {
           setStatus(response.data.message || 'Wystąpił nieznany błąd.');
         }
