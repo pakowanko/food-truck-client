@@ -6,10 +6,8 @@ function BookingPage() {
   const { profileId } = useParams();
   const navigate = useNavigate();
 
-  // --- ZMIANA: Rozdzielenie daty na początkową i końcową ---
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
   const [eventTime, setEventTime] = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const [eventType, setEventType] = useState('');
@@ -18,25 +16,25 @@ function BookingPage() {
   const [eventDescription, setEventDescription] = useState('');
   
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  // Zmienna 'loading' zmieniona na 'isSubmitting' dla większej czytelności
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setLoading(true);
+    // Ustawiamy stan 'isSubmitting' na true, co blokuje przycisk
+    setIsSubmitting(true);
     setMessage('');
 
     const token = localStorage.getItem('token');
     if (!token) {
       setMessage('Musisz być zalogowany, aby dokonać rezerwacji.');
-      setLoading(false);
+      setIsSubmitting(false); // Odblokuj przycisk
       return;
     }
 
     const bookingData = {
       profile_id: parseInt(profileId),
-      // --- ZMIANA: Wysyłanie zakresu dat ---
       event_start_date: startDate,
-      // Jeśli data końcowa nie jest ustawiona, użyj tej samej co początkowa
       event_end_date: endDate || startDate, 
       event_time: eventTime,
       event_location: eventLocation,
@@ -51,10 +49,12 @@ function BookingPage() {
       alert('Twoja prośba o rezerwację została wysłana!');
       navigate('/dashboard');
     } catch (error) {
+      // Błąd 409 (Conflict) z naszego backendu zostanie tutaj przechwycony
       const errorMessage = error.response?.data?.message || 'Błąd sieci lub serwera.';
       setMessage(`Błąd: ${errorMessage}`);
     } finally {
-      setLoading(false);
+      // Niezależnie od wyniku, odblokowujemy przycisk po zakończeniu
+      setIsSubmitting(false);
     }
   };
 
@@ -68,7 +68,6 @@ function BookingPage() {
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
         
-        {/* --- ZMIANA: Dwa pola daty zamiast jednego --- */}
         <div style={{ display: 'flex', gap: '15px' }}>
           <div style={{flex: 1}}>
             <label>Data rozpoczęcia:</label>
@@ -112,8 +111,8 @@ function BookingPage() {
           <label>Opis wydarzenia i specjalne wymagania:</label>
           <textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} rows="4" required />
         </div>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Wysyłanie...' : 'Wyślij prośbę o rezerwację'}
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Wysyłanie...' : 'Wyślij prośbę o rezerwację'}
         </button>
         {message && <p style={{color: 'red', marginTop: '10px'}}>{message}</p>}
       </form>
